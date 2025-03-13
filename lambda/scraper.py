@@ -4,6 +4,7 @@ import json
 import urllib3
 import boto3
 import scrapy
+import logging
 from scrapy.crawler import CrawlerProcess
 
 # AWS S3 Configuration
@@ -12,6 +13,9 @@ GITHUB_S3_FOLDER = "github-md-files"
 WEBSITE_S3_FOLDER = "website-html-files"
 
 http = urllib3.PoolManager()
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 def get_github_files(repo_url, file_type):
     """
@@ -93,7 +97,7 @@ def run_scraper(websites):
     process.crawl(WebsiteSpider, websites=websites)
     process.start()
 
-def main():
+def lambda_handler(event, context):
     github_repo_url = "https://github.com/clemsonciti/palmetto-examples"
     
     websites = [
@@ -106,6 +110,12 @@ def main():
     
     download_and_upload_github(github_repo_url, "md", S3_BUCKET_NAME, GITHUB_S3_FOLDER)
     run_scraper(websites)
-    
-if __name__ == "__main__":
-    main()
+
+    response = {
+        "statusCode": 200,
+        "body": ""
+    }
+
+    logger.info("Response: %s", response)
+
+    return response
