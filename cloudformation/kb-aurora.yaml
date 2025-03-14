@@ -1,0 +1,2493 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: This template deploys Bedrock Knowledge Base along with Aurora Serverless cluster
+  as its vector store. (qs-1l9dmnt5e)
+Metadata:
+  cfn-lint:
+    config:
+      ignore_checks:
+        - ERDSStorageEncryptionEnabled
+        - E3002
+        - E3510
+        - W1030
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Secret Manager Configuration
+        Parameters:
+          - SecretsKMSKeyId
+      - Label:
+          default: Aurora Database Cluster Configuration
+        Parameters:
+          - AuroraDBName
+          - AuroraDBUsername
+          - AuroraDBSubnetGroupName
+          - AuroraDBNetworkType
+          - AuroraDBEncryption
+          - AuroraDBKMSKeyId
+          - AuroraDBMinCapacity
+          - AuroraDBMaxCapacity
+          - AuroraDBSecondsUntilAutoPause
+          - AuroraDBStorageType
+      - Label:
+          default: Bedrock Knowledge Base Configuration
+        Parameters:
+          - BedrockKnowledgeBaseName
+          - BedrockKnowledgeBaseDescription
+          - ExistingBedrockServiceExecutionRoleArn
+          - BedrockServiceExecutionRoleName
+          - BedrockKBEmbeddingModelArn
+          - BedrockKBEmbeddingModelDimensionConfigurable
+          - BedrockKBEmbeddingModelDimensions
+          - BedrockKnowledgeBaseTags
+          - KnowledgeBaseDeliveryDestinationCW
+          - KnowledgeBasePrefixCWLogGroupName
+          - KnowledgeBaseIDInLogGroupName
+          - KnowledgeBaseSuffixCWLogGroupName
+          - KnowledgeBaseDeliveryDestinationS3
+          - KnowledgeBaseDeliveryDestinationS3CrossAccount
+          - KnowledgeBaseDeliveryDestinationDF
+          - KnowledgeBaseDeliveryDestinationDFCrossAccount
+      - Label:
+          default: Bedrock Knowledge Base Data Source Configuration
+        Parameters:
+          - DataSourceName1
+          - DataSourceDescription1
+          - DataSourceDeletionPolicy1
+          - DataSourceBucketArn1
+          - DataSourceOwnerAccountId1
+          - DataSourceInclusionPrefixes1
+          - IsDataSourceObject1
+          - DataSourceBucketKmsKeyArn1
+          - DataSourceKMSKeyArn1
+          - DataSourceChunkingStrategy1
+          - DataSourceFixedSizeMaxTokens1
+          - DataSourceFixedSizeOverlapPercentage1
+          - DataSourceHierarchicalMaxParentTokens1
+          - DataSourceHierarchicalMaxChildTokens1
+          - DataSourceHierarchicalOverlapTokens1
+          - DataSourceSemanticBreakpointPercentile1
+          - DataSourceSemanticBufferSize1
+          - DataSourceSemanticMaxTokens1
+          - DataSourceTransformationLambdaArn1
+          - DataSourceTransformationStepToApply1
+          - DataSourceTransformationS3URI1
+          - DataSourceTransformationS3KmsKeyArn1
+          - DataSourceParsingStrategy1
+          - DataSourceParsingModelArn1
+          - DataSourceParsingPromptText1
+          - DataSourceName2
+          - DataSourceDescription2
+          - DataSourceDeletionPolicy2
+          - DataSourceBucketArn2
+          - DataSourceOwnerAccountId2
+          - DataSourceInclusionPrefixes2
+          - IsDataSourceObject2
+          - DataSourceBucketKmsKeyArn2
+          - DataSourceKMSKeyArn2
+          - DataSourceChunkingStrategy2
+          - DataSourceFixedSizeMaxTokens2
+          - DataSourceFixedSizeOverlapPercentage2
+          - DataSourceHierarchicalMaxParentTokens2
+          - DataSourceHierarchicalMaxChildTokens2
+          - DataSourceHierarchicalOverlapTokens2
+          - DataSourceSemanticBreakpointPercentile2
+          - DataSourceSemanticBufferSize2
+          - DataSourceSemanticMaxTokens2
+          - DataSourceTransformationLambdaArn2
+          - DataSourceTransformationStepToApply2
+          - DataSourceTransformationS3URI2
+          - DataSourceTransformationS3KmsKeyArn2
+          - DataSourceParsingStrategy2
+          - DataSourceParsingModelArn2
+          - DataSourceParsingPromptText2
+          - DataSourceName3
+          - DataSourceDescription3
+          - DataSourceDeletionPolicy3
+          - DataSourceBucketArn3
+          - DataSourceOwnerAccountId3
+          - DataSourceInclusionPrefixes3
+          - IsDataSourceObject3
+          - DataSourceBucketKmsKeyArn3
+          - DataSourceKMSKeyArn3
+          - DataSourceChunkingStrategy3
+          - DataSourceFixedSizeMaxTokens3
+          - DataSourceFixedSizeOverlapPercentage3
+          - DataSourceHierarchicalMaxParentTokens3
+          - DataSourceHierarchicalMaxChildTokens3
+          - DataSourceHierarchicalOverlapTokens3
+          - DataSourceSemanticBreakpointPercentile3
+          - DataSourceSemanticBufferSize3
+          - DataSourceSemanticMaxTokens3
+          - DataSourceTransformationLambdaArn3
+          - DataSourceTransformationStepToApply3
+          - DataSourceTransformationS3URI3
+          - DataSourceTransformationS3KmsKeyArn3
+          - DataSourceParsingStrategy3
+          - DataSourceParsingModelArn3
+          - DataSourceParsingPromptText3
+          - DataSourceName4
+          - DataSourceDescription4
+          - DataSourceDeletionPolicy4
+          - DataSourceBucketArn4
+          - DataSourceOwnerAccountId4
+          - DataSourceInclusionPrefixes4
+          - IsDataSourceObject4
+          - DataSourceBucketKmsKeyArn4
+          - DataSourceKMSKeyArn4
+          - DataSourceChunkingStrategy4
+          - DataSourceFixedSizeMaxTokens4
+          - DataSourceFixedSizeOverlapPercentage4
+          - DataSourceHierarchicalMaxParentTokens4
+          - DataSourceHierarchicalMaxChildTokens4
+          - DataSourceHierarchicalOverlapTokens4
+          - DataSourceSemanticBreakpointPercentile4
+          - DataSourceSemanticBufferSize4
+          - DataSourceSemanticMaxTokens4
+          - DataSourceTransformationLambdaArn4
+          - DataSourceTransformationStepToApply4
+          - DataSourceTransformationS3URI4
+          - DataSourceTransformationS3KmsKeyArn4
+          - DataSourceParsingStrategy4
+          - DataSourceParsingModelArn4
+          - DataSourceParsingPromptText4
+          - DataSourceName5
+          - DataSourceDescription5
+          - DataSourceDeletionPolicy5
+          - DataSourceBucketArn5
+          - DataSourceOwnerAccountId5
+          - DataSourceInclusionPrefixes5
+          - IsDataSourceObject5
+          - DataSourceBucketKmsKeyArn5
+          - DataSourceKMSKeyArn5
+          - DataSourceChunkingStrategy5
+          - DataSourceFixedSizeMaxTokens5
+          - DataSourceFixedSizeOverlapPercentage5
+          - DataSourceHierarchicalMaxParentTokens5
+          - DataSourceHierarchicalMaxChildTokens5
+          - DataSourceHierarchicalOverlapTokens5
+          - DataSourceSemanticBreakpointPercentile5
+          - DataSourceSemanticBufferSize5
+          - DataSourceSemanticMaxTokens5
+          - DataSourceTransformationLambdaArn5
+          - DataSourceTransformationStepToApply5
+          - DataSourceTransformationS3URI5
+          - DataSourceTransformationS3KmsKeyArn5
+          - DataSourceParsingStrategy5
+          - DataSourceParsingModelArn5
+          - DataSourceParsingPromptText5
+
+    ParameterLabels:
+      SecretsKMSKeyId:
+        default: KMS Key Arn
+      AuroraDBName:
+        default: Aurora Cluster Database name
+      AuroraDBUsername:
+        default: Aurora Cluster Username
+      AuroraDBSubnetGroupName:
+        default: Aurora DB Subnet Group name
+      AuroraDBNetworkType:
+        default: Aurora Cluster Network Type
+      AuroraDBEncryption:
+        default: Aurora Cluster Encryption
+      AuroraDBKMSKeyId:
+        default: Aurora Cluster Encryption KMS Key Arn
+      AuroraDBMinCapacity:
+        default: Aurora Cluster Minimum Capacity
+      AuroraDBMaxCapacity:
+        default: Aurora Cluster Maximum Capactiy
+      AuroraDBSecondsUntilAutoPause:
+        default: Aurora Cluster Seconds Until AutoPause
+      AuroraDBStorageType:
+        default: Aurora Cluster Storage Type
+      BedrockKnowledgeBaseName:
+        default: Bedrock Knowledge Base Name
+      BedrockKnowledgeBaseDescription:
+        default: Bedrock Knowledge Base Description
+      ExistingBedrockServiceExecutionRoleArn:
+        default: Existing Bedrock Service Execution Role Arn
+      BedrockServiceExecutionRoleName:
+        default: Bedrock Service Execution Role Name
+      BedrockKBEmbeddingModelArn:
+        default: Bedrock Embedding Model Arn
+      BedrockKBEmbeddingModelDimensionConfigurable:
+        default: Bedrock Embedding Model Dimensions Configurable
+      BedrockKBEmbeddingModelDimensions:
+        default: Bedrock Embedding Model Dimensions
+      BedrockKnowledgeBaseTags:
+        default: Bedrock Knowledge Base Tags
+      KnowledgeBaseDeliveryDestinationCW:
+        default: Bedrock Knowledge Base CloudWatch Logs Delivery Destination
+      KnowledgeBasePrefixCWLogGroupName:
+        default: Bedrock Knowledge Base CloudWatch Log Group Name Prefix
+      KnowledgeBaseIDInLogGroupName:
+        default: Bedrock Knowledge Base ID exists in Log Group Name
+      KnowledgeBaseSuffixCWLogGroupName:
+        default: Bedrock Knowledge Base CloudWatch Log Group Name Suffix
+      KnowledgeBaseDeliveryDestinationS3:
+        default: Bedrock Knowledge Base S3 Logs Delivery Destination
+      KnowledgeBaseDeliveryDestinationS3CrossAccount:
+        default: Bedrock Knowledge Base S3 Cross Account Logs Delivery Destination
+      KnowledgeBaseDeliveryDestinationDF:
+        default: Bedrock Knowledge Base Data Firehose Delivery Destination
+      KnowledgeBaseDeliveryDestinationDFCrossAccount:
+        default: Bedrock Knowledge Base Data Firehose Cross Account Delivery Destination
+      DataSourceName1:
+        default: Bedrock Data Source 1 Name
+      DataSourceDescription1:
+        default: Bedrock Data Source 1 Description
+      DataSourceDeletionPolicy1:
+        default: Bedrock Data Source 1 Deletion Policy
+      DataSourceBucketArn1:
+        default: Bedrock Data Source 1 Bucket Arn
+      DataSourceOwnerAccountId1:
+        default: Bedrock Data Source 1 Owner Account Id
+      DataSourceInclusionPrefixes1:
+        default: Bedrock Data Source 1 Inclusion Prefixes
+      IsDataSourceObject1:
+        default: Bedrock Data Source 1 an S3 object or folder
+      DataSourceBucketKmsKeyArn1:
+        default: Bedrock Data Source 1 Bucket Kms Key Arn
+      DataSourceKMSKeyArn1:
+        default: Bedrock Data Source 1 Encryption KMS Key
+      DataSourceChunkingStrategy1:
+        default: Bedrock Data Source 1 Chunking Strategy
+      DataSourceFixedSizeMaxTokens1:
+        default: Bedrock Data Source 1 Fixed Size Chunking Strategy Max Tokens
+      DataSourceFixedSizeOverlapPercentage1:
+        default: Bedrock Data Source 1 Fixed Size Chunking Strategy Percentage of overlap between adjacent chunks
+      DataSourceHierarchicalMaxParentTokens1:
+        default: Bedrock Data Source 1 Hierarchical Chunking Strategy Max Parent Tokens
+      DataSourceHierarchicalMaxChildTokens1:
+        default: Bedrock Data Source 1 Hierarchical Chunking Strategy Max Child Tokens
+      DataSourceHierarchicalOverlapTokens1:
+        default: Bedrock Data Source 1 Hierarchical Chunking Strategy Overlapping Tokens
+      DataSourceSemanticBreakpointPercentile1:
+        default: Bedrock Data Source 1 Semantic Chunking Strategy Breakpoint Percentile Threshold
+      DataSourceSemanticBufferSize1:
+        default: Bedrock Data Source 1 Semantic Chunking Strategy Buffer Size
+      DataSourceSemanticMaxTokens1:
+        default: Bedrock Data Source 1 Semantic Chunking Strategy Max Tokens
+      DataSourceTransformationLambdaArn1:
+        default: Bedrock Data Source 1 Transformation Lambda Arn
+      DataSourceTransformationStepToApply1:
+        default: Bedrock Data Source 1 Transformation Step To Apply
+      DataSourceTransformationS3URI1:
+        default: Bedrock Data Source 1 Transformation S3 Bucket URI
+      DataSourceTransformationS3KmsKeyArn1:
+        default: Bedrock Data Source 1 Transformation S3 Bucket Kms Key Arn
+      DataSourceParsingStrategy1:
+        default: Bedrock Data Source 1 Parsing Strategy
+      DataSourceParsingModelArn1:
+        default: Bedrock Data Source 1 Parsing Model Arn
+      DataSourceParsingPromptText1:
+        default: Bedrock Data Source 1 Parsing Prompt Text
+      DataSourceName2:
+        default: Bedrock Data Source 2 Name
+      DataSourceDescription2:
+        default: Bedrock Data Source 2 Description
+      DataSourceDeletionPolicy2:
+        default: Bedrock Data Source 2 Deletion Policy
+      DataSourceBucketArn2:
+        default: Bedrock Data Source 2 Bucket Arn
+      DataSourceOwnerAccountId2:
+        default: Bedrock Data Source 2 Owner Account Id
+      DataSourceInclusionPrefixes2:
+        default: Bedrock Data Source 2 Inclusion Prefixes
+      IsDataSourceObject2:
+        default: Bedrock Data Source 2 an S3 object or folder
+      DataSourceBucketKmsKeyArn2:
+        default: Bedrock Data Source 2 Bucket Kms Key Arn
+      DataSourceKMSKeyArn2:
+        default: Bedrock Data Source 2 Encryption KMS Key
+      DataSourceChunkingStrategy2:
+        default: Bedrock Data Source 2 Chunking Strategy
+      DataSourceFixedSizeMaxTokens2:
+        default: Bedrock Data Source 2 Fixed Size Chunking Strategy Max Tokens
+      DataSourceFixedSizeOverlapPercentage2:
+        default: Bedrock Data Source 2 Fixed Size Chunking Strategy Percentage of overlap between adjacent chunks
+      DataSourceHierarchicalMaxParentTokens2:
+        default: Bedrock Data Source 2 Hierarchical Chunking Strategy Max Parent Tokens
+      DataSourceHierarchicalMaxChildTokens2:
+        default: Bedrock Data Source 2 Hierarchical Chunking Strategy Max Child Tokens
+      DataSourceHierarchicalOverlapTokens2:
+        default: Bedrock Data Source 2 Hierarchical Chunking Strategy Overlapping Tokens
+      DataSourceSemanticBreakpointPercentile2:
+        default: Bedrock Data Source 2 Semantic Chunking Strategy Breakpoint Percentile Threshold
+      DataSourceSemanticBufferSize2:
+        default: Bedrock Data Source 2 Semantic Chunking Strategy Buffer Size
+      DataSourceSemanticMaxTokens2:
+        default: Bedrock Data Source 2 Semantic Chunking Strategy Max Tokens
+      DataSourceTransformationLambdaArn2:
+        default: Bedrock Data Source 2 Transformation Lambda Arn
+      DataSourceTransformationStepToApply2:
+        default: Bedrock Data Source 2 Transformation Step To Apply
+      DataSourceTransformationS3URI2:
+        default: Bedrock Data Source 2 Transformation S3 Bucket URI
+      DataSourceTransformationS3KmsKeyArn2:
+        default: Bedrock Data Source 2 Transformation S3 Bucket Kms Key Arn
+      DataSourceParsingStrategy2:
+        default: Bedrock Data Source 2 Parsing Strategy
+      DataSourceParsingModelArn2:
+        default: Bedrock Data Source 2 Parsing Model Arn
+      DataSourceParsingPromptText2:
+        default: Bedrock Data Source 2 Parsing Prompt Text
+      DataSourceName3:
+        default: Bedrock Data Source 3 Name
+      DataSourceDescription3:
+        default: Bedrock Data Source 3 Description
+      DataSourceDeletionPolicy3:
+        default: Bedrock Data Source 3 Deletion Policy
+      DataSourceBucketArn3:
+        default: Bedrock Data Source 3 Bucket Arn
+      DataSourceOwnerAccountId3:
+        default: Bedrock Data Source 3 Owner Account Id
+      DataSourceInclusionPrefixes3:
+        default: Bedrock Data Source 3 Inclusion Prefixes
+      IsDataSourceObject3:
+        default: Bedrock Data Source 3 an S3 object or folder
+      DataSourceBucketKmsKeyArn3:
+        default: Bedrock Data Source 3 Bucket Kms Key Arn
+      DataSourceKMSKeyArn3:
+        default: Bedrock Data Source 3 Encryption KMS Key
+      DataSourceChunkingStrategy3:
+        default: Bedrock Data Source 3 Chunking Strategy
+      DataSourceFixedSizeMaxTokens3:
+        default: Bedrock Data Source 3 Fixed Size Chunking Strategy Max Tokens
+      DataSourceFixedSizeOverlapPercentage3:
+        default: Bedrock Data Source 3 Fixed Size Chunking Strategy Percentage of overlap between adjacent chunks
+      DataSourceHierarchicalMaxParentTokens3:
+        default: Bedrock Data Source 3 Hierarchical Chunking Strategy Max Parent Tokens
+      DataSourceHierarchicalMaxChildTokens3:
+        default: Bedrock Data Source 3 Hierarchical Chunking Strategy Max Child Tokens
+      DataSourceHierarchicalOverlapTokens3:
+        default: Bedrock Data Source 3 Hierarchical Chunking Strategy Overlapping Tokens
+      DataSourceSemanticBreakpointPercentile3:
+        default: Bedrock Data Source 3 Semantic Chunking Strategy Breakpoint Percentile Threshold
+      DataSourceSemanticBufferSize3:
+        default: Bedrock Data Source 3 Semantic Chunking Strategy Buffer Size
+      DataSourceSemanticMaxTokens3:
+        default: Bedrock Data Source 3 Semantic Chunking Strategy Max Tokens
+      DataSourceTransformationLambdaArn3:
+        default: Bedrock Data Source 3 Transformation Lambda Arn
+      DataSourceTransformationStepToApply3:
+        default: Bedrock Data Source 3 Transformation Step To Apply
+      DataSourceTransformationS3URI3:
+        default: Bedrock Data Source 3 Transformation S3 Bucket URI
+      DataSourceTransformationS3KmsKeyArn3:
+        default: Bedrock Data Source 3 Transformation S3 Bucket Kms Key Arn
+      DataSourceParsingStrategy3:
+        default: Bedrock Data Source 3 Parsing Strategy
+      DataSourceParsingModelArn3:
+        default: Bedrock Data Source 3 Parsing Model Arn
+      DataSourceParsingPromptText3:
+        default: Bedrock Data Source 3 Parsing Prompt Text
+      DataSourceName4:
+        default: Bedrock Data Source 4 Name
+      DataSourceDescription4:
+        default: Bedrock Data Source 4 Description
+      DataSourceDeletionPolicy4:
+        default: Bedrock Data Source 4 Deletion Policy
+      DataSourceBucketArn4:
+        default: Bedrock Data Source 4 Bucket Arn
+      DataSourceOwnerAccountId4:
+        default: Bedrock Data Source 4 Owner Account Id
+      DataSourceInclusionPrefixes4:
+        default: Bedrock Data Source 4 Inclusion Prefixes
+      IsDataSourceObject4:
+        default: Bedrock Data Source 4 an S3 object or folder
+      DataSourceBucketKmsKeyArn4:
+        default: Bedrock Data Source 4 Bucket Kms Key Arn
+      DataSourceKMSKeyArn4:
+        default: Bedrock Data Source 4 Encryption KMS Key
+      DataSourceChunkingStrategy4:
+        default: Bedrock Data Source 4 Chunking Strategy
+      DataSourceFixedSizeMaxTokens4:
+        default: Bedrock Data Source 4 Fixed Size Chunking Strategy Max Tokens
+      DataSourceFixedSizeOverlapPercentage4:
+        default: Bedrock Data Source 4 Fixed Size Chunking Strategy Percentage of overlap between adjacent chunks
+      DataSourceHierarchicalMaxParentTokens4:
+        default: Bedrock Data Source 4 Hierarchical Chunking Strategy Max Parent Tokens
+      DataSourceHierarchicalMaxChildTokens4:
+        default: Bedrock Data Source 4 Hierarchical Chunking Strategy Max Child Tokens
+      DataSourceHierarchicalOverlapTokens4:
+        default: Bedrock Data Source 4 Hierarchical Chunking Strategy Overlapping Tokens
+      DataSourceSemanticBreakpointPercentile4:
+        default: Bedrock Data Source 4 Semantic Chunking Strategy Breakpoint Percentile Threshold
+      DataSourceSemanticBufferSize4:
+        default: Bedrock Data Source 4 Semantic Chunking Strategy Buffer Size
+      DataSourceSemanticMaxTokens4:
+        default: Bedrock Data Source 4 Semantic Chunking Strategy Max Tokens
+      DataSourceTransformationLambdaArn4:
+        default: Bedrock Data Source 4 Transformation Lambda Arn
+      DataSourceTransformationStepToApply4:
+        default: Bedrock Data Source 4 Transformation Step To Apply
+      DataSourceTransformationS3URI4:
+        default: Bedrock Data Source 4 Transformation S3 Bucket URI
+      DataSourceTransformationS3KmsKeyArn4:
+        default: Bedrock Data Source 4 Transformation S3 Bucket Kms Key Arn
+      DataSourceParsingStrategy4:
+        default: Bedrock Data Source 4 Parsing Strategy
+      DataSourceParsingModelArn4:
+        default: Bedrock Data Source 4 Parsing Model Arn
+      DataSourceParsingPromptText4:
+        default: Bedrock Data Source 4 Parsing Prompt Text
+      DataSourceName5:
+        default: Bedrock Data Source 5 Name
+      DataSourceDescription5:
+        default: Bedrock Data Source 5 Description
+      DataSourceDeletionPolicy5:
+        default: Bedrock Data Source 5 Deletion Policy
+      DataSourceBucketArn5:
+        default: Bedrock Data Source 5 Bucket Arn
+      DataSourceOwnerAccountId5:
+        default: Bedrock Data Source 5 Owner Account Id
+      DataSourceInclusionPrefixes5:
+        default: Bedrock Data Source 5 Inclusion Prefixes
+      IsDataSourceObject5:
+        default: Bedrock Data Source 5 an S3 object or folder
+      DataSourceBucketKmsKeyArn5:
+        default: Bedrock Data Source 5 Bucket Kms Key Arn
+      DataSourceKMSKeyArn5:
+        default: Bedrock Data Source 5 Encryption KMS Key
+      DataSourceChunkingStrategy5:
+        default: Bedrock Data Source 5 Chunking Strategy
+      DataSourceFixedSizeMaxTokens5:
+        default: Bedrock Data Source 5 Fixed Size Chunking Strategy Max Tokens
+      DataSourceFixedSizeOverlapPercentage5:
+        default: Bedrock Data Source 5 Fixed Size Chunking Strategy Percentage of overlap between adjacent chunks
+      DataSourceHierarchicalMaxParentTokens5:
+        default: Bedrock Data Source 5 Hierarchical Chunking Strategy Max Parent Tokens
+      DataSourceHierarchicalMaxChildTokens5:
+        default: Bedrock Data Source 5 Hierarchical Chunking Strategy Max Child Tokens
+      DataSourceHierarchicalOverlapTokens5:
+        default: Bedrock Data Source 5 Hierarchical Chunking Strategy Overlapping Tokens
+      DataSourceSemanticBreakpointPercentile5:
+        default: Bedrock Data Source 5 Semantic Chunking Strategy Breakpoint Percentile Threshold
+      DataSourceSemanticBufferSize5:
+        default: Bedrock Data Source 5 Semantic Chunking Strategy Buffer Size
+      DataSourceSemanticMaxTokens5:
+        default: Bedrock Data Source 5 Semantic Chunking Strategy Max Tokens
+      DataSourceTransformationLambdaArn5:
+        default: Bedrock Data Source 5 Transformation Lambda Arn
+      DataSourceTransformationStepToApply5:
+        default: Bedrock Data Source 5 Transformation Step To Apply
+      DataSourceTransformationS3URI5:
+        default: Bedrock Data Source 5 Transformation S3 Bucket URI
+      DataSourceTransformationS3KmsKeyArn5:
+        default: Bedrock Data Source 5 Transformation S3 Bucket Kms Key Arn
+      DataSourceParsingStrategy5:
+        default: Bedrock Data Source 5 Parsing Strategy
+      DataSourceParsingModelArn5:
+        default: Bedrock Data Source 5 Parsing Model Arn
+      DataSourceParsingPromptText5:
+        default: Bedrock Data Source 5 Parsing Prompt Text
+
+Parameters:
+  SecretsKMSKeyId:
+    Description: Enter the KMS Key Arn to encrypt the secrets value. Leave it blank if you want to use AWS Managed Key.
+    Type: String
+    Default: ''
+  AuroraDBName:
+    Description: Enter the Database name for the Aurora Cluster.
+    Type: String
+    Default: Bedrock_Knowledge_Base_Cluster
+  AuroraDBUsername:
+    Description: Enter the Username for the Aurora Cluster.
+    Type: String
+    Default: AuroraBedrockAdmin
+  AuroraDBSubnetGroupName:
+    Description: Enter the DB Subnet Group name for the Aurora Cluster.
+    Type: String
+    Default: default
+  AuroraDBNetworkType:
+    Description: Enter the network type of the Aurora cluster.
+    Type: String
+    AllowedValues:
+      - IPV4
+      - DUAL
+    Default: IPV4
+  AuroraDBEncryption:
+    Description: Aurora Cluster Encryption needed, true or false.
+    Type: String
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Default: 'true'
+  AuroraDBKMSKeyId:
+    Description: Enter KMS key Arn that is used to encrypt the database instances in the Aurora cluster. Leave it blank if you want to use AWS Managed Key.
+    Type: String
+    Default: ''
+  AuroraDBMinCapacity:
+    Description: Enter Aurora Cluster minimum capacity.
+    Type: Number
+    Default: 0
+  AuroraDBMaxCapacity:
+    Description: Enter Aurora Cluster maximum capacity.
+    Type: Number
+    Default: 16
+  AuroraDBSecondsUntilAutoPause:
+    Description: Enter Aurora Cluster number of seconds before scaling to 0
+    Type: Number
+    Default: 10800
+  AuroraDBStorageType:
+    Description: Enter Aurora Cluster storage type.
+    Type: String
+    AllowedValues:
+      - aurora
+      - aurora-iopt1
+    Default: aurora
+  BedrockKnowledgeBaseName:
+    Description: Enter the name of the Knowledge Base.
+    Type: String
+    AllowedPattern: ^([0-9a-zA-Z][_-]?){1,100}$
+  BedrockKnowledgeBaseDescription:
+    Description: Enter the description of the Knoweldge Base.
+    Type: String
+    MaxLength: 200
+    Default: ''
+  ExistingBedrockServiceExecutionRoleArn:
+    Description: Use an existing Bedrock Service Role, provide its Arn.
+    Type: String
+    Default: ''
+  BedrockServiceExecutionRoleName:
+    Description: Enter the Bedrock Service Role Name.
+    Type: String
+    Default: ''
+  BedrockKBEmbeddingModelArn:
+    Description: Enter the ARN of the model used to create vector embeddings
+    Type: String
+    AllowedPattern: ^(arn:aws(-[^:]+)?:[a-z0-9-]+:[a-z0-9-]{1,20}:[0-9]{0,12}:[a-zA-Z0-9-:/._+]+)$
+    MinLength: 20
+    MaxLength: 2048
+  BedrockKBEmbeddingModelDimensionConfigurable:
+    Description: Use an existing Bedrock Service Role.
+    Type: String
+    AllowedValues:
+      - 'true'
+      - 'false'
+  BedrockKBEmbeddingModelDimensions:
+    Description: Enter the dimension details for the vector configuration used on the model
+    Type: Number
+    MinValue: 0
+    MaxValue: 4096
+  BedrockKnowledgeBaseTags:
+    Description: Enter the tags for the Knowledge Base. Provide it like a comma separated key$value tuple like {key1$value1,key2$value2}
+    Type: CommaDelimitedList
+    Default: ""
+  KnowledgeBaseDeliveryDestinationCW:
+    Description: Enter the CloudWatch Delivery Destination for the Knowledge Base logs.
+    Type: String
+    Default: ''
+  KnowledgeBasePrefixCWLogGroupName:
+    Description: Enter the CloudWatch Log Group Name Prefix for the Knowledge Base
+    Type: String
+    Default: ''
+  KnowledgeBaseIDInLogGroupName:
+    Description: Does Knowledge Base ID exist in CloudWatch Log Group Name
+    Type: String
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Default: 'false'
+  KnowledgeBaseSuffixCWLogGroupName:
+    Description: Enter the CloudWatch Log Group Name Suffix for the Knowledge Base
+    Type: String
+    Default: ''
+  KnowledgeBaseDeliveryDestinationS3:
+    Description: Enter the S3 Delivery Destination for the Knowledge Base logs.
+    Type: String
+    Default: ''
+  KnowledgeBaseDeliveryDestinationS3CrossAccount:
+    Description: Enter the Delivery Destination Arn for Cross Account S3 Logging
+    Type: String
+    Default: ''
+  KnowledgeBaseDeliveryDestinationDF:
+    Description: Enter the Data Firehose Delivery Destination for the Knowledge Base logs.
+    Type: String
+    Default: ''
+  KnowledgeBaseDeliveryDestinationDFCrossAccount:
+    Description: Enter the Delivery Destination Arn for Cross Account Data Firehose Logging
+    Type: String
+    Default: ''
+  DataSourceName1:
+    Description: Enter the name for Knowledge Base Data Source 1
+    Type: String
+    AllowedPattern: ^([0-9a-zA-Z][_-]?){1,100}$
+  DataSourceDescription1:
+    Description: Enter the description for the Knowledge Base Data Source 1
+    Type: String
+    MaxLength: 200
+    Default: ''
+  DataSourceDeletionPolicy1:
+    Description: Enter the data deletion Policy for Knowledge Base Data Source 1
+    Type: String
+    AllowedValues:
+      - RETAIN
+      - DELETE
+    Default: DELETE
+  DataSourceBucketArn1:
+    Description: Enter the Arn of the S3 bucket that contains your data for Data Source 1
+    Type: String
+    AllowedPattern: ^arn:aws(|-cn|-us-gov):s3:::[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$
+    MinLength: 1
+    MaxLength: 2048
+  DataSourceOwnerAccountId1:
+    Description: Enter the account ID for the owner of the S3 bucket for Data Source 1
+    Type: String
+    Default: ''
+  DataSourceInclusionPrefixes1:
+    Description: Enter the list of S3 prefixes for Data Source 1 (as a ;-separated strings)
+    Type: String
+    Default: ''
+  IsDataSourceObject1:
+    Description: Is Data Source 1 an S3 Object?
+    Type: String
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Default: 'false'
+  DataSourceBucketKmsKeyArn1:
+    Description: Enter the KMS Key Arn for the S3 bucket for Data Source 1
+    Type: String
+    Default: ''
+  DataSourceKMSKeyArn1:
+    Description: Enter the KMS key Arn for Data Source 1 transient data storage
+    Type: String
+    Default: ''
+  DataSourceChunkingStrategy1:
+    Description: Enter the Chunking Strategy for Data Source 1
+    Type: String
+    AllowedValues:
+      - FIXED_SIZE
+      - HIERARCHICAL
+      - SEMANTIC
+      - NONE
+      - DEFAULT_CHUNKING
+    Default: DEFAULT_CHUNKING
+  DataSourceFixedSizeMaxTokens1:
+    Description: Enter the Fixed Size Chunking Strategy Max Tokens for Data Source 1
+    Type: Number
+    MinValue: 1
+    Default: 1
+  DataSourceFixedSizeOverlapPercentage1:
+    Description: Enter the Fixed Size Chunking Strategy Percentage of overlap between adjacent chunks for Data Source 1
+    Type: Number
+    MinValue: 1
+    MaxValue: 99
+    Default: 1
+  DataSourceHierarchicalMaxParentTokens1:
+    Description: Enter the Hierarchical Chunking Strategy Max Parent Tokens for Data Source 1
+    Type: Number
+    MinValue: 1
+    MaxValue: 8192
+    Default: 1
+  DataSourceHierarchicalMaxChildTokens1:
+    Description: Enter the Hierarchical Chunking Strategy Max Child Tokens for Data Source 1
+    Type: Number
+    MinValue: 1
+    MaxValue: 8192
+    Default: 1
+  DataSourceHierarchicalOverlapTokens1:
+    Description: Enter the Hierarchical Chunking Strategy Overlapping Tokens for Data Source 1
+    Type: Number
+    MinValue: 1
+    Default: 1
+  DataSourceSemanticBreakpointPercentile1:
+    Description: Enter the Semantic Chunking Strategy Breakpoint Percentile Threshold for Data Source 1
+    Type: Number
+    MinValue: 50
+    MaxValue: 99
+    Default: 50
+  DataSourceSemanticBufferSize1:
+    Description: Enter the Semantic Chunking Strategy Buffer Size for Data Source 1
+    Type: Number
+    MinValue: 0
+    MaxValue: 1
+    Default: 0
+  DataSourceSemanticMaxTokens1:
+    Description: Enter the Semantic Chunking Strategy Max Tokens for Data Source 1
+    Type: Number
+    MinValue: 1
+    Default: 1
+  DataSourceTransformationLambdaArn1:
+    Description: Enter the Transformation Lambda Function Arn for Data Source 1
+    Type: String
+    Default: ''
+  DataSourceTransformationStepToApply1:
+    Description: Enter when the Bedrock service applies the transformation for Data Source 1
+    Type: String
+    Default: POST_CHUNKING
+  DataSourceTransformationS3URI1:
+    Description: Enter the Transformation S3 Bucket URI for Data Source 1
+    Type: String
+    Default: ''
+  DataSourceTransformationS3KmsKeyArn1:
+    Description: Enter the KMS Key Arn for Transformation S3 bucket for Data Source 1
+    Type: String
+    Default: ''
+  DataSourceParsingStrategy1:
+    Description: Enter the Parsing Strategy for Data Source 1
+    Type: String
+    Default: ''
+  DataSourceParsingModelArn1:
+    Description: Enter the Parsing Model Arn for Data Source 1
+    Type: String
+    Default: ''
+  DataSourceParsingPromptText1:
+    Description: Enter the Parsing Prompt Text for Data Source 1
+    Type: String
+    Default: ''
+  DataSourceName2:
+    Description: Enter the name for Knowledge Base Data Source 2
+    Type: String
+    Default: ''
+  DataSourceDescription2:
+    Description: Enter the description for the Knowledge Base Data Source 2
+    Type: String
+    MaxLength: 200
+    Default: ''
+  DataSourceDeletionPolicy2:
+    Description: Enter the data deletion Policy for Knowledge Base Data Source 2
+    Type: String
+    AllowedValues:
+      - RETAIN
+      - DELETE
+    Default: DELETE
+  DataSourceBucketArn2:
+    Description: Enter the Arn of the S3 bucket that contains your data for Data Source 2
+    Type: String
+    Default: ''
+  DataSourceOwnerAccountId2:
+    Description: Enter the account ID for the owner of the S3 bucket for Data Source 2
+    Type: String
+    Default: ''
+  DataSourceInclusionPrefixes2:
+    Description: Enter the list of S3 prefixes for Data Source 2 (as a ;-separated strings)
+    Type: String
+    Default: ''
+  IsDataSourceObject2:
+    Description: Is Data Source 2 an S3 Object?
+    Type: String
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Default: 'false'
+  DataSourceBucketKmsKeyArn2:
+    Description: Enter the KMS Key Arn for the S3 bucket for Data Source 2
+    Type: String
+    Default: ''
+  DataSourceKMSKeyArn2:
+    Description: Enter the KMS key Arn for Data Source 2 transient data storage
+    Type: String
+    Default: ''
+  DataSourceChunkingStrategy2:
+    Description: Enter the Chunking Strategy for Data Source 2
+    Type: String
+    AllowedValues:
+      - FIXED_SIZE
+      - HIERARCHICAL
+      - SEMANTIC
+      - NONE
+      - DEFAULT_CHUNKING
+    Default: DEFAULT_CHUNKING
+  DataSourceFixedSizeMaxTokens2:
+    Description: Enter the Fixed Size Chunking Strategy Max Tokens for Data Source 2
+    Type: Number
+    MinValue: 1
+    Default: 1
+  DataSourceFixedSizeOverlapPercentage2:
+    Description: Enter the Fixed Size Chunking Strategy Percentage of overlap between adjacent chunks for Data Source 2
+    Type: Number
+    MinValue: 1
+    MaxValue: 99
+    Default: 1
+  DataSourceHierarchicalMaxParentTokens2:
+    Description: Enter the Hierarchical Chunking Strategy Max Parent Tokens for Data Source 2
+    Type: Number
+    MinValue: 1
+    MaxValue: 8192
+    Default: 1
+  DataSourceHierarchicalMaxChildTokens2:
+    Description: Enter the Hierarchical Chunking Strategy Max Child Tokens for Data Source 2
+    Type: Number
+    MinValue: 1
+    MaxValue: 8192
+    Default: 1
+  DataSourceHierarchicalOverlapTokens2:
+    Description: Enter the Hierarchical Chunking Strategy Overlapping Tokens for Data Source 2
+    Type: Number
+    MinValue: 1
+    Default: 1
+  DataSourceSemanticBreakpointPercentile2:
+    Description: Enter the Semantic Chunking Strategy Breakpoint Percentile Threshold for Data Source 2
+    Type: Number
+    MinValue: 50
+    MaxValue: 99
+    Default: 50
+  DataSourceSemanticBufferSize2:
+    Description: Enter the Semantic Chunking Strategy Buffer Size for Data Source 2
+    Type: Number
+    MinValue: 0
+    MaxValue: 1
+    Default: 0
+  DataSourceSemanticMaxTokens2:
+    Description: Enter the Semantic Chunking Strategy Max Tokens for Data Source 2
+    Type: Number
+    MinValue: 1
+    Default: 1
+  DataSourceTransformationLambdaArn2:
+    Description: Enter the Transformation Lambda Function Arn for Data Source 2
+    Type: String
+    Default: ''
+  DataSourceTransformationStepToApply2:
+    Description: Enter when the Bedrock service applies the transformation for Data Source 2
+    Type: String
+    Default: POST_CHUNKING
+  DataSourceTransformationS3URI2:
+    Description: Enter the Transformation S3 Bucket URI for Data Source 2
+    Type: String
+    Default: ''
+  DataSourceTransformationS3KmsKeyArn2:
+    Description: Enter the KMS Key Arn for Transformation S3 bucket for Data Source 2
+    Type: String
+    Default: ''
+  DataSourceParsingStrategy2:
+    Description: Enter the Parsing Strategy for Data Source 2
+    Type: String
+    Default: ''
+  DataSourceParsingModelArn2:
+    Description: Enter the Parsing Model Arn for Data Source 2
+    Type: String
+    Default: ''
+  DataSourceParsingPromptText2:
+    Description: Enter the Parsing Prompt Text for Data Source 2
+    Type: String
+    Default: ''
+  DataSourceName3:
+    Description: Enter the name for Knowledge Base Data Source 3
+    Type: String
+    Default: ''
+  DataSourceDescription3:
+    Description: Enter the description for the Knowledge Base Data Source 3
+    Type: String
+    MaxLength: 200
+    Default: ''
+  DataSourceDeletionPolicy3:
+    Description: Enter the data deletion Policy for Knowledge Base Data Source 3
+    Type: String
+    AllowedValues:
+      - RETAIN
+      - DELETE
+    Default: DELETE
+  DataSourceBucketArn3:
+    Description: Enter the Arn of the S3 bucket that contains your data for Data Source 3
+    Type: String
+    Default: ''
+  DataSourceOwnerAccountId3:
+    Description: Enter the account ID for the owner of the S3 bucket for Data Source 3
+    Type: String
+    Default: ''
+  DataSourceInclusionPrefixes3:
+    Description: Enter the list of S3 prefixes for Data Source 3 (as a ;-separated strings)
+    Type: String
+    Default: ''
+  IsDataSourceObject3:
+    Description: Is Data Source 3 an S3 Object?
+    Type: String
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Default: 'false'
+  DataSourceBucketKmsKeyArn3:
+    Description: Enter the KMS Key Arn for the S3 bucket for Data Source 3
+    Type: String
+    Default: ''
+  DataSourceKMSKeyArn3:
+    Description: Enter the KMS key Arn for Data Source 3 transient data storage
+    Type: String
+    Default: ''
+  DataSourceChunkingStrategy3:
+    Description: Enter the Chunking Strategy for Data Source 3
+    Type: String
+    AllowedValues:
+      - FIXED_SIZE
+      - HIERARCHICAL
+      - SEMANTIC
+      - NONE
+      - DEFAULT_CHUNKING
+    Default: DEFAULT_CHUNKING
+  DataSourceFixedSizeMaxTokens3:
+    Description: Enter the Fixed Size Chunking Strategy Max Tokens for Data Source 3
+    Type: Number
+    MinValue: 1
+    Default: 1
+  DataSourceFixedSizeOverlapPercentage3:
+    Description: Enter the Fixed Size Chunking Strategy Percentage of overlap between adjacent chunks for Data Source 3
+    Type: Number
+    MinValue: 1
+    MaxValue: 99
+    Default: 1
+  DataSourceHierarchicalMaxParentTokens3:
+    Description: Enter the Hierarchical Chunking Strategy Max Parent Tokens for Data Source 3
+    Type: Number
+    MinValue: 1
+    MaxValue: 8192
+    Default: 1
+  DataSourceHierarchicalMaxChildTokens3:
+    Description: Enter the Hierarchical Chunking Strategy Max Child Tokens for Data Source 3
+    Type: Number
+    MinValue: 1
+    MaxValue: 8192
+    Default: 1
+  DataSourceHierarchicalOverlapTokens3:
+    Description: Enter the Hierarchical Chunking Strategy Overlapping Tokens for Data Source 3
+    Type: Number
+    MinValue: 1
+    Default: 1
+  DataSourceSemanticBreakpointPercentile3:
+    Description: Enter the Semantic Chunking Strategy Breakpoint Percentile Threshold for Data Source 3
+    Type: Number
+    MinValue: 50
+    MaxValue: 99
+    Default: 50
+  DataSourceSemanticBufferSize3:
+    Description: Enter the Semantic Chunking Strategy Buffer Size for Data Source 3
+    Type: Number
+    MinValue: 0
+    MaxValue: 1
+    Default: 0
+  DataSourceSemanticMaxTokens3:
+    Description: Enter the Semantic Chunking Strategy Max Tokens for Data Source 3
+    Type: Number
+    MinValue: 1
+    Default: 1
+  DataSourceTransformationLambdaArn3:
+    Description: Enter the Transformation Lambda Function Arn for Data Source 3
+    Type: String
+    Default: ''
+  DataSourceTransformationStepToApply3:
+    Description: Enter when the Bedrock service applies the transformation for Data Source 3
+    Type: String
+    Default: POST_CHUNKING
+  DataSourceTransformationS3URI3:
+    Description: Enter the Transformation S3 Bucket URI for Data Source 3
+    Type: String
+    Default: ''
+  DataSourceTransformationS3KmsKeyArn3:
+    Description: Enter the KMS Key Arn for Transformation S3 bucket for Data Source 3
+    Type: String
+    Default: ''
+  DataSourceParsingStrategy3:
+    Description: Enter the Parsing Strategy for Data Source 3
+    Type: String
+    Default: ''
+  DataSourceParsingModelArn3:
+    Description: Enter the Parsing Model Arn for Data Source 3
+    Type: String
+    Default: ''
+  DataSourceParsingPromptText3:
+    Description: Enter the Parsing Prompt Text for Data Source 3
+    Type: String
+    Default: ''
+  DataSourceName4:
+    Description: Enter the name for Knowledge Base Data Source 4
+    Type: String
+    Default: ''
+  DataSourceDescription4:
+    Description: Enter the description for the Knowledge Base Data Source 4
+    Type: String
+    MaxLength: 200
+    Default: ''
+  DataSourceDeletionPolicy4:
+    Description: Enter the data deletion Policy for Knowledge Base Data Source 4
+    Type: String
+    AllowedValues:
+      - RETAIN
+      - DELETE
+    Default: DELETE
+  DataSourceBucketArn4:
+    Description: Enter the Arn of the S3 bucket that contains your data for Data Source 4
+    Type: String
+    Default: ''
+  DataSourceOwnerAccountId4:
+    Description: Enter the account ID for the owner of the S3 bucket for Data Source 4
+    Type: String
+    Default: ''
+  DataSourceInclusionPrefixes4:
+    Description: Enter the list of S3 prefixes for Data Source 4 (as a ;-separated strings)
+    Type: String
+    Default: ''
+  IsDataSourceObject4:
+    Description: Is Data Source 4 an S3 Object?
+    Type: String
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Default: 'false'
+  DataSourceBucketKmsKeyArn4:
+    Description: Enter the KMS Key Arn for the S3 bucket for Data Source 4
+    Type: String
+    Default: ''
+  DataSourceKMSKeyArn4:
+    Description: Enter the KMS key Arn for Data Source 4 transient data storage
+    Type: String
+    Default: ''
+  DataSourceChunkingStrategy4:
+    Description: Enter the Chunking Strategy for Data Source 4
+    Type: String
+    AllowedValues:
+      - FIXED_SIZE
+      - HIERARCHICAL
+      - SEMANTIC
+      - NONE
+      - DEFAULT_CHUNKING
+    Default: DEFAULT_CHUNKING
+  DataSourceFixedSizeMaxTokens4:
+    Description: Enter the Fixed Size Chunking Strategy Max Tokens for Data Source 4
+    Type: Number
+    MinValue: 1
+    Default: 1
+  DataSourceFixedSizeOverlapPercentage4:
+    Description: Enter the Fixed Size Chunking Strategy Percentage of overlap between adjacent chunks for Data Source 4
+    Type: Number
+    MinValue: 1
+    MaxValue: 99
+    Default: 1
+  DataSourceHierarchicalMaxParentTokens4:
+    Description: Enter the Hierarchical Chunking Strategy Max Parent Tokens for Data Source 4
+    Type: Number
+    MinValue: 1
+    MaxValue: 8192
+    Default: 1
+  DataSourceHierarchicalMaxChildTokens4:
+    Description: Enter the Hierarchical Chunking Strategy Max Child Tokens for Data Source 4
+    Type: Number
+    MinValue: 1
+    MaxValue: 8192
+    Default: 1
+  DataSourceHierarchicalOverlapTokens4:
+    Description: Enter the Hierarchical Chunking Strategy Overlapping Tokens for Data Source 4
+    Type: Number
+    MinValue: 1
+    Default: 1
+  DataSourceSemanticBreakpointPercentile4:
+    Description: Enter the Semantic Chunking Strategy Breakpoint Percentile Threshold for Data Source 4
+    Type: Number
+    MinValue: 50
+    MaxValue: 99
+    Default: 50
+  DataSourceSemanticBufferSize4:
+    Description: Enter the Semantic Chunking Strategy Buffer Size for Data Source 4
+    Type: Number
+    MinValue: 0
+    MaxValue: 1
+    Default: 0
+  DataSourceSemanticMaxTokens4:
+    Description: Enter the Semantic Chunking Strategy Max Tokens for Data Source 4
+    Type: Number
+    MinValue: 1
+    Default: 1
+  DataSourceTransformationLambdaArn4:
+    Description: Enter the Transformation Lambda Function Arn for Data Source 4
+    Type: String
+    Default: ''
+  DataSourceTransformationStepToApply4:
+    Description: Enter when the Bedrock service applies the transformation for Data Source 4
+    Type: String
+    Default: POST_CHUNKING
+  DataSourceTransformationS3URI4:
+    Description: Enter the Transformation S3 Bucket URI for Data Source 4
+    Type: String
+    Default: ''
+  DataSourceTransformationS3KmsKeyArn4:
+    Description: Enter the KMS Key Arn for Transformation S3 bucket for Data Source 4
+    Type: String
+    Default: ''
+  DataSourceParsingStrategy4:
+    Description: Enter the Parsing Strategy for Data Source 4
+    Type: String
+    Default: ''
+  DataSourceParsingModelArn4:
+    Description: Enter the Parsing Model Arn for Data Source 4
+    Type: String
+    Default: ''
+  DataSourceParsingPromptText4:
+    Description: Enter the Parsing Prompt Text for Data Source 4
+    Type: String
+    Default: ''
+  DataSourceName5:
+    Description: Enter the name for Knowledge Base Data Source 5
+    Type: String
+    Default: ''
+  DataSourceDescription5:
+    Description: Enter the description for the Knowledge Base Data Source 5
+    Type: String
+    MaxLength: 200
+    Default: ''
+  DataSourceDeletionPolicy5:
+    Description: Enter the data deletion Policy for Knowledge Base Data Source 5
+    Type: String
+    AllowedValues:
+      - RETAIN
+      - DELETE
+    Default: DELETE
+  DataSourceBucketArn5:
+    Description: Enter the Arn of the S3 bucket that contains your data for Data Source 5
+    Type: String
+    Default: ''
+  DataSourceOwnerAccountId5:
+    Description: Enter the account ID for the owner of the S3 bucket for Data Source 5
+    Type: String
+    Default: ''
+  DataSourceInclusionPrefixes5:
+    Description: Enter the list of S3 prefixes for Data Source 5 (as a ;-separated strings)
+    Type: String
+    Default: ''
+  IsDataSourceObject5:
+    Description: Is Data Source 5 an S3 Object?
+    Type: String
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Default: 'false'
+  DataSourceBucketKmsKeyArn5:
+    Description: Enter the KMS Key Arn for the S3 bucket for Data Source 5
+    Type: String
+    Default: ''
+  DataSourceKMSKeyArn5:
+    Description: Enter the KMS key Arn for Data Source 5 transient data storage
+    Type: String
+    Default: ''
+  DataSourceChunkingStrategy5:
+    Description: Enter the Chunking Strategy for Data Source 5
+    Type: String
+    AllowedValues:
+      - FIXED_SIZE
+      - HIERARCHICAL
+      - SEMANTIC
+      - NONE
+      - DEFAULT_CHUNKING
+    Default: DEFAULT_CHUNKING
+  DataSourceFixedSizeMaxTokens5:
+    Description: Enter the Fixed Size Chunking Strategy Max Tokens for Data Source 5
+    Type: Number
+    MinValue: 1
+    Default: 1
+  DataSourceFixedSizeOverlapPercentage5:
+    Description: Enter the Fixed Size Chunking Strategy Percentage of overlap between adjacent chunks for Data Source 5
+    Type: Number
+    MinValue: 1
+    MaxValue: 99
+    Default: 1
+  DataSourceHierarchicalMaxParentTokens5:
+    Description: Enter the Hierarchical Chunking Strategy Max Parent Tokens for Data Source 5
+    Type: Number
+    MinValue: 1
+    MaxValue: 8192
+    Default: 1
+  DataSourceHierarchicalMaxChildTokens5:
+    Description: Enter the Hierarchical Chunking Strategy Max Child Tokens for Data Source 5
+    Type: Number
+    MinValue: 1
+    MaxValue: 8192
+    Default: 1
+  DataSourceHierarchicalOverlapTokens5:
+    Description: Enter the Hierarchical Chunking Strategy Overlapping Tokens for Data Source 5
+    Type: Number
+    MinValue: 1
+    Default: 1
+  DataSourceSemanticBreakpointPercentile5:
+    Description: Enter the Semantic Chunking Strategy Breakpoint Percentile Threshold for Data Source 5
+    Type: Number
+    MinValue: 50
+    MaxValue: 99
+    Default: 50
+  DataSourceSemanticBufferSize5:
+    Description: Enter the Semantic Chunking Strategy Buffer Size for Data Source 5
+    Type: Number
+    MinValue: 0
+    MaxValue: 1
+    Default: 0
+  DataSourceSemanticMaxTokens5:
+    Description: Enter the Semantic Chunking Strategy Max Tokens for Data Source 5
+    Type: Number
+    MinValue: 1
+    Default: 1
+  DataSourceTransformationLambdaArn5:
+    Description: Enter the Transformation Lambda Function Arn for Data Source 5
+    Type: String
+    Default: ''
+  DataSourceTransformationStepToApply5:
+    Description: Enter when the Bedrock service applies the transformation for Data Source 5
+    Type: String
+    Default: POST_CHUNKING
+  DataSourceTransformationS3URI5:
+    Description: Enter the Transformation S3 Bucket URI for Data Source 5
+    Type: String
+    Default: ''
+  DataSourceTransformationS3KmsKeyArn5:
+    Description: Enter the KMS Key Arn for Transformation S3 bucket for Data Source 5
+    Type: String
+    Default: ''
+  DataSourceParsingStrategy5:
+    Description: Enter the Parsing Strategy for Data Source 5
+    Type: String
+    Default: ''
+  DataSourceParsingModelArn5:
+    Description: Enter the Parsing Model Arn for Data Source 5
+    Type: String
+    Default: ''
+  DataSourceParsingPromptText5:
+    Description: Enter the Parsing Prompt Text for Data Source 5
+    Type: String
+    Default: ''
+
+Conditions:
+  SecretsDefaultKMSKey: !Equals [!Ref SecretsKMSKeyId, '']
+  DefaultSubnetGroup: !Equals [!Ref AuroraDBSubnetGroupName, 'default']
+  AuroraDBDefaultKMSKey: !Equals [!Ref AuroraDBKMSKeyId, '']
+  NoBedrockKBDescription: !Equals [!Ref BedrockKnowledgeBaseDescription, '']
+  NoBedrockKBRoleExists: !Equals [!Ref ExistingBedrockServiceExecutionRoleArn, '']
+  ConfigurableModelDimensions: !Equals [!Ref BedrockKBEmbeddingModelDimensionConfigurable, 'true']
+  NoBedrockKBTags: !Equals [!Join ['', !Ref BedrockKnowledgeBaseTags], '']
+  BedrockCWLoggingEnabledwithNewLogGroup: !Not [!Equals [!Ref KnowledgeBasePrefixCWLogGroupName, '']]
+  BedrockCWKnowledgeBaseIDInLogGroupName: !Equals [!Ref KnowledgeBaseIDInLogGroupName, 'true']
+  BedrockCWLoggingEnabledwithExistingLogGroup: !Not [!Equals [!Ref KnowledgeBaseDeliveryDestinationCW, '']]
+  BedrockCWLoggingEnabled: !Or [!Condition BedrockCWLoggingEnabledwithNewLogGroup, !Condition BedrockCWLoggingEnabledwithExistingLogGroup]
+  BedrockS3LoggingEnabledSameAccount: !Not [!Equals [!Ref KnowledgeBaseDeliveryDestinationS3, '']]
+  BedrockS3LoggingEnabledCrossAccount: !Not [!Equals [!Ref KnowledgeBaseDeliveryDestinationS3CrossAccount, '']]
+  BedrockS3LoggingEnabled: !Or [!Condition BedrockS3LoggingEnabledCrossAccount, !Condition BedrockS3LoggingEnabledSameAccount]
+  BedrockDFLoggingEnabledSameAccount: !Not [!Equals [!Ref KnowledgeBaseDeliveryDestinationDF, '']]
+  BedrockDFLoggingEnabledCrossAccount: !Not [!Equals [!Ref KnowledgeBaseDeliveryDestinationDFCrossAccount, '']]
+  BedrockDFLoggingEnabled: !Or [!Condition BedrockDFLoggingEnabledCrossAccount, !Condition BedrockDFLoggingEnabledSameAccount]
+  LoggingEnabled: !Or [!Condition BedrockCWLoggingEnabled, !Condition BedrockS3LoggingEnabled, !Condition BedrockDFLoggingEnabled]
+  NoDataSource1Description: !Equals [!Ref DataSourceDescription1, '']
+  NoDataSource1AccountID: !Equals [!Ref DataSourceOwnerAccountId1, '']
+  NoDataSource1InclustionPrefixes: !Equals [!Ref DataSourceInclusionPrefixes1, '']
+  IsDataSource1Object: !Equals [!Ref IsDataSourceObject1, 'true']
+  DataSource1BucketKMSKeyArnProvided: !Not [!Equals [!Ref DataSourceBucketKmsKeyArn1, '']]
+  DataSource1KMSKeyPresent: !Not [!Equals [!Ref DataSourceKMSKeyArn1, '']]
+  DefaultDataSource1Chunking: !Equals [!Ref DataSourceChunkingStrategy1, 'DEFAULT_CHUNKING']
+  FixedSizeDataSource1Chunking: !Equals [!Ref DataSourceChunkingStrategy1, 'FIXED_SIZE']
+  HierarchicalDataSource1Chunking: !Equals [!Ref DataSourceChunkingStrategy1, 'HIERARCHICAL']
+  SemanticDataSource1Chunking: !Equals [!Ref DataSourceChunkingStrategy1, 'SEMANTIC']
+  DataSource1TransformationLambdaPresent: !Not [!Equals [!Ref DataSourceTransformationLambdaArn1, '']]
+  DataSource1TransformationS3KMSKeyArnProvided: !Not [!Equals [!Ref DataSourceTransformationS3KmsKeyArn1, '']]
+  DefaultDataSource1ParsingStrategy: !Equals [!Ref DataSourceParsingStrategy1, '']
+  NoDataSource1ParsingPrompt: !Equals [!Ref DataSourceParsingPromptText1, '']
+  DataSource2Provided: !Not [!Equals [!Ref DataSourceBucketArn2, '']]
+  NoDataSource2Description: !Equals [!Ref DataSourceDescription2, '']
+  NoDataSource2AccountID: !Equals [!Ref DataSourceOwnerAccountId2, '']
+  NoDataSource2InclustionPrefixes: !Equals [!Ref DataSourceInclusionPrefixes2, '']
+  IsDataSource2Object: !Equals [!Ref IsDataSourceObject2, 'true']
+  DataSource2BucketKMSKeyArnProvided: !Not [!Equals [!Ref DataSourceBucketKmsKeyArn2, '']]
+  DataSource2KMSKeyPresent: !Not [!Equals [!Ref DataSourceKMSKeyArn2, '']]
+  DefaultDataSource2Chunking: !Equals [!Ref DataSourceChunkingStrategy2, 'DEFAULT_CHUNKING']
+  FixedSizeDataSource2Chunking: !Equals [!Ref DataSourceChunkingStrategy2, 'FIXED_SIZE']
+  HierarchicalDataSource2Chunking: !Equals [!Ref DataSourceChunkingStrategy2, 'HIERARCHICAL']
+  SemanticDataSource2Chunking: !Equals [!Ref DataSourceChunkingStrategy2, 'SEMANTIC']
+  DataSource2TransformationLambdaPresent: !Not [!Equals [!Ref DataSourceTransformationLambdaArn2, '']]
+  DataSource2TransformationS3KMSKeyArnProvided: !Not [!Equals [!Ref DataSourceTransformationS3KmsKeyArn2, '']]
+  DefaultDataSource2ParsingStrategy: !Equals [!Ref DataSourceParsingStrategy2, '']
+  NoDataSource2ParsingPrompt: !Equals [!Ref DataSourceParsingPromptText2, '']
+  DataSource3Provided: !Not [!Equals [!Ref DataSourceBucketArn3, '']]
+  NoDataSource3Description: !Equals [!Ref DataSourceDescription3, '']
+  NoDataSource3AccountID: !Equals [!Ref DataSourceOwnerAccountId3, '']
+  NoDataSource3InclustionPrefixes: !Equals [!Ref DataSourceInclusionPrefixes3, '']
+  IsDataSource3Object: !Equals [!Ref IsDataSourceObject3, 'true']
+  DataSource3BucketKMSKeyArnProvided: !Not [!Equals [!Ref DataSourceBucketKmsKeyArn3, '']]
+  DataSource3KMSKeyPresent: !Not [!Equals [!Ref DataSourceKMSKeyArn3, '']]
+  DefaultDataSource3Chunking: !Equals [!Ref DataSourceChunkingStrategy3, 'DEFAULT_CHUNKING']
+  FixedSizeDataSource3Chunking: !Equals [!Ref DataSourceChunkingStrategy3, 'FIXED_SIZE']
+  HierarchicalDataSource3Chunking: !Equals [!Ref DataSourceChunkingStrategy3, 'HIERARCHICAL']
+  SemanticDataSource3Chunking: !Equals [!Ref DataSourceChunkingStrategy3, 'SEMANTIC']
+  DataSource3TransformationLambdaPresent: !Not [!Equals [!Ref DataSourceTransformationLambdaArn3, '']]
+  DataSource3TransformationS3KMSKeyArnProvided: !Not [!Equals [!Ref DataSourceTransformationS3KmsKeyArn3, '']]
+  DefaultDataSource3ParsingStrategy: !Equals [!Ref DataSourceParsingStrategy3, '']
+  NoDataSource3ParsingPrompt: !Equals [!Ref DataSourceParsingPromptText3, '']
+  DataSource4Provided: !Not [!Equals [!Ref DataSourceBucketArn4, '']]
+  NoDataSource4Description: !Equals [!Ref DataSourceDescription4, '']
+  NoDataSource4AccountID: !Equals [!Ref DataSourceOwnerAccountId4, '']
+  NoDataSource4InclustionPrefixes: !Equals [!Ref DataSourceInclusionPrefixes4, '']
+  IsDataSource4Object: !Equals [!Ref IsDataSourceObject4, 'true']
+  DataSource4BucketKMSKeyArnProvided: !Not [!Equals [!Ref DataSourceBucketKmsKeyArn4, '']]
+  DataSource4KMSKeyPresent: !Not [!Equals [!Ref DataSourceKMSKeyArn4, '']]
+  DefaultDataSource4Chunking: !Equals [!Ref DataSourceChunkingStrategy4, 'DEFAULT_CHUNKING']
+  FixedSizeDataSource4Chunking: !Equals [!Ref DataSourceChunkingStrategy4, 'FIXED_SIZE']
+  HierarchicalDataSource4Chunking: !Equals [!Ref DataSourceChunkingStrategy4, 'HIERARCHICAL']
+  SemanticDataSource4Chunking: !Equals [!Ref DataSourceChunkingStrategy4, 'SEMANTIC']
+  DataSource4TransformationLambdaPresent: !Not [!Equals [!Ref DataSourceTransformationLambdaArn4, '']]
+  DataSource4TransformationS3KMSKeyArnProvided: !Not [!Equals [!Ref DataSourceTransformationS3KmsKeyArn4, '']]
+  DefaultDataSource4ParsingStrategy: !Equals [!Ref DataSourceParsingStrategy4, '']
+  NoDataSource4ParsingPrompt: !Equals [!Ref DataSourceParsingPromptText4, '']
+  DataSource5Provided: !Not [!Equals [!Ref DataSourceBucketArn5, '']]
+  NoDataSource5Description: !Equals [!Ref DataSourceDescription5, '']
+  NoDataSource5AccountID: !Equals [!Ref DataSourceOwnerAccountId5, '']
+  NoDataSource5InclustionPrefixes: !Equals [!Ref DataSourceInclusionPrefixes5, '']
+  IsDataSource5Object: !Equals [!Ref IsDataSourceObject5, 'true']
+  DataSource5BucketKMSKeyArnProvided: !Not [!Equals [!Ref DataSourceBucketKmsKeyArn5, '']]
+  DataSource5KMSKeyPresent: !Not [!Equals [!Ref DataSourceKMSKeyArn5, '']]
+  DefaultDataSource5Chunking: !Equals [!Ref DataSourceChunkingStrategy5, 'DEFAULT_CHUNKING']
+  FixedSizeDataSource5Chunking: !Equals [!Ref DataSourceChunkingStrategy5, 'FIXED_SIZE']
+  HierarchicalDataSource5Chunking: !Equals [!Ref DataSourceChunkingStrategy5, 'HIERARCHICAL']
+  SemanticDataSource5Chunking: !Equals [!Ref DataSourceChunkingStrategy5, 'SEMANTIC']
+  DataSource5TransformationLambdaPresent: !Not [!Equals [!Ref DataSourceTransformationLambdaArn5, '']]
+  DataSource5TransformationS3KMSKeyArnProvided: !Not [!Equals [!Ref DataSourceTransformationS3KmsKeyArn5, '']]
+  DefaultDataSource5ParsingStrategy: !Equals [!Ref DataSourceParsingStrategy5, '']
+  NoDataSource5ParsingPrompt: !Equals [!Ref DataSourceParsingPromptText5, '']
+  DataSourceBucketKmsKeysPresent: !Or
+                                    - !Condition DataSource1BucketKMSKeyArnProvided
+                                    - !Condition DataSource2BucketKMSKeyArnProvided
+                                    - !Condition DataSource3BucketKMSKeyArnProvided
+                                    - !Condition DataSource4BucketKMSKeyArnProvided
+                                    - !Condition DataSource5BucketKMSKeyArnProvided
+  DataSourceLambdasPresent: !Or
+                              - !Condition DataSource1TransformationLambdaPresent
+                              - !Condition DataSource2TransformationLambdaPresent
+                              - !Condition DataSource3TransformationLambdaPresent
+                              - !Condition DataSource4TransformationLambdaPresent
+                              - !Condition DataSource5TransformationLambdaPresent
+  DataSourceGenerateDataKmsKeysPresent: !Or
+                                        - !Condition DataSource1KMSKeyPresent
+                                        - !Condition DataSource2KMSKeyPresent
+                                        - !Condition DataSource3KMSKeyPresent
+                                        - !Condition DataSource4KMSKeyPresent
+                                        - !Condition DataSource5KMSKeyPresent
+                                        - !Condition DataSource1TransformationS3KMSKeyArnProvided
+                                        - !Condition DataSource2TransformationS3KMSKeyArnProvided
+                                        - !Condition DataSource3TransformationS3KMSKeyArnProvided
+                                        - !Condition DataSource4TransformationS3KMSKeyArnProvided
+                                        - !Condition DataSource5TransformationS3KMSKeyArnProvided
+  DataSourceParsingModelsPresent: !Or
+                                    - !Not [!Condition DefaultDataSource1ParsingStrategy]
+                                    - !Not [!Condition DefaultDataSource2ParsingStrategy]
+                                    - !Not [!Condition DefaultDataSource3ParsingStrategy]
+                                    - !Not [!Condition DefaultDataSource4ParsingStrategy]
+                                    - !Not [!Condition DefaultDataSource5ParsingStrategy]
+
+Resources:
+  BedrockUserSecret:
+    Type: 'AWS::SecretsManager::Secret'
+    Properties:
+      Description: 'Secret required for Bedrock Knowledge Base to interact with Aurora Cluster'
+      GenerateSecretString:
+        SecretStringTemplate: '{"username": "bedrock_user"}'
+        GenerateStringKey: 'password'
+        ExcludeCharacters: "/'\"@"
+        IncludeSpace: false
+      KmsKeyId: !If [SecretsDefaultKMSKey, !Ref "AWS::NoValue", !Ref SecretsKMSKeyId]
+
+  AuroraDBSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: 'Security Group associated with Aurora Cluster as part of Aurora Bedrock Quick Create'
+      VpcId: !Ref "AWS::NoValue"
+
+  AuroraDBSecurityGroupIngress:
+    Type: 'AWS::EC2::SecurityGroupIngress'
+    Properties:
+      GroupId: !GetAtt AuroraDBSecurityGroup.GroupId
+      SourceSecurityGroupId: !GetAtt AuroraDBSecurityGroup.GroupId
+      IpProtocol: tcp
+      FromPort: 0
+      ToPort: 65535
+
+  AuroraDBCluster:
+    Type: 'AWS::RDS::DBCluster'
+    Properties:
+      DatabaseName: !Ref AuroraDBName
+      DBSubnetGroupName: !If [DefaultSubnetGroup, !Ref "AWS::NoValue", !Ref AuroraDBSubnetGroupName]
+      NetworkType: !Ref AuroraDBNetworkType
+      EnableHttpEndpoint: true
+      Engine: aurora-postgresql
+      EngineMode: provisioned
+      EngineVersion: 15.7
+      Port: 5432
+      StorageEncrypted: !Ref AuroraDBEncryption
+      KmsKeyId: !If [AuroraDBDefaultKMSKey, !Ref "AWS::NoValue", !Ref AuroraDBKMSKeyId]
+      ManageMasterUserPassword: true
+      MasterUsername: !Ref AuroraDBUsername
+      MasterUserSecret:
+        !If
+          - SecretsDefaultKMSKey
+          - !Ref "AWS::NoValue"
+          -
+            KmsKeyId: !Ref SecretsKMSKeyId
+      ServerlessV2ScalingConfiguration:
+        MinCapacity: !Ref AuroraDBMinCapacity
+        MaxCapacity: !Ref AuroraDBMaxCapacity
+        SecondsUntilAutoPause: !Ref AuroraDBSecondsUntilAutoPause
+      StorageType: !Ref AuroraDBStorageType
+      VpcSecurityGroupIds: [!GetAtt AuroraDBSecurityGroup.GroupId]
+      Tags: !Ref "AWS::NoValue"
+
+  AuroraDBInstance:
+    Type: "AWS::RDS::DBInstance"
+    Properties:
+      Engine: aurora-postgresql
+      DBInstanceClass: db.serverless
+      DBClusterIdentifier: !Ref AuroraDBCluster
+      PubliclyAccessible: false
+
+  SeedingLambdaRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      Description: Execution role for the seeding Aurora DB Lambda Function
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+              - lambda.amazonaws.com
+          Action:
+            - 'sts:AssumeRole'
+      Policies:
+        !If
+          - SecretsDefaultKMSKey
+          - !Ref 'AWS::NoValue'
+          -
+            - PolicyName: SecretKMSDecryptPermission
+              PolicyDocument:
+                Version: '2012-10-17'
+                Statement:
+                  - Sid: KMSDecryptStatement
+                    Effect: Allow
+                    Action:
+                      - 'kms:Decrypt'
+                    Resource:
+                      - !Ref SecretsKMSKeyId
+                    Condition:
+                      StringEquals:
+                        kms:ViaService:
+                          - !Sub "secretsmanager.${AWS::Region}.amazonaws.com"
+
+  SeedingLambdaRolePolicy:
+    Type: "AWS::IAM::ManagedPolicy"
+    Properties:
+      Description: Managed Policy for the execution role of the seeding Aurora DB Lambda Function
+      ManagedPolicyName: !Sub
+                          - "${Role_ID}Policy"
+                          - Role_ID: !GetAtt SeedingLambdaRole.RoleId
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'rds-data:ExecuteStatement'
+            Resource:
+              - !Sub "arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:cluster:${AuroraDBCluster}"
+          - Effect: Allow
+            Action:
+              - 'secretsmanager:GetSecretValue'
+            Resource:
+              - !GetAtt AuroraDBCluster.MasterUserSecret.SecretArn
+              - !Sub "${BedrockUserSecret}"
+          - Effect: Allow
+            Action:
+              - 'iam:DeleteRole'
+              - 'iam:DetachRolePolicy'
+              - 'iam:DeleteRolePolicy'
+              - 'iam:ListRolePolicies'
+            Resource:
+              - !GetAtt SeedingLambdaRole.Arn
+          - Effect: Allow
+            Action:
+              - 'iam:DeletePolicy'
+              - 'iam:GetPolicy'
+              - 'iam:ListPolicyVersions'
+            Resource:
+              - !Sub
+                - "arn:${AWS::Partition}:iam::${AWS::AccountId}:policy/${Role_ID}Policy"
+                - Role_ID: !GetAtt SeedingLambdaRole.RoleId
+          - Effect: Allow
+            Action:
+              - 'lambda:DeleteFunction'
+            Resource:
+              - !GetAtt SeedingFunction.Arn
+      Roles: [!Ref SeedingLambdaRole]
+
+  SeedingFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: A lambda function to seed the Aurora Database with necessary bedrock-specific tables, extensions and indices and transform CFN parameters into relevant CFN construct types
+      Handler: index.handler
+      Runtime: nodejs18.x
+      Role: !GetAtt SeedingLambdaRole.Arn
+      Timeout: 240
+      Code:
+        ZipFile: >
+            const { RDSDataClient, ExecuteStatementCommand } = require("@aws-sdk/client-rds-data");
+            const { GetSecretValueCommand, SecretsManagerClient } = require("@aws-sdk/client-secrets-manager");
+            const { LambdaClient, DeleteFunctionCommand } = require("@aws-sdk/client-lambda");
+            const { IAMClient, DeletePolicyCommand, DeleteRoleCommand, DetachRolePolicyCommand, ListRolePoliciesCommand, DeleteRolePolicyCommand } = require("@aws-sdk/client-iam");
+
+            exports.handler = async function (event, context) {
+
+                if (event.RequestType == 'Delete') {
+                    var responseData = { Value: event.ResourceProperties.AuroraDBClusterArn, Reason: "Success" };
+                    await sendResponse(event, context, "SUCCESS", responseData);
+                }
+
+                try {
+                    let bedrockTags = event.ResourceProperties.BedrockKBTags;
+
+                    let bedrockTagInput = {};
+                    bedrockTags.forEach(tag => {
+                        const [key, value] = tag.split('$');
+                        bedrockTagInput[key.trim()] = value.trim();
+                    });
+
+                    const rdsClient = new RDSDataClient();
+                    const smClient = new SecretsManagerClient();
+                    const iamClient = new IAMClient();
+                    const lambdaClient = new LambdaClient();
+
+                    const extensionInput = {
+                        resourceArn: event.ResourceProperties.AuroraDBClusterArn,
+                        secretArn: event.ResourceProperties.AuroraDBClusterAdminSecretArn,
+                        sql: 'CREATE EXTENSION IF NOT EXISTS vector;',
+                        database: event.ResourceProperties.AuroraDBName,
+                        continueAfterTimeout: true,
+                    };
+
+                    const schemaInput = {
+                        resourceArn: event.ResourceProperties.AuroraDBClusterArn,
+                        secretArn: event.ResourceProperties.AuroraDBClusterAdminSecretArn,
+                        sql: 'CREATE SCHEMA bedrock_integration;',
+                        database: event.ResourceProperties.AuroraDBName,
+                        continueAfterTimeout: true,
+                    };
+
+                    const passwordInput = {
+                        SecretId: event.ResourceProperties.BedrockUserSecretArn
+                    };
+
+                    const passwordCommand = new GetSecretValueCommand(passwordInput);
+                    const passwordResponse = await smClient.send(passwordCommand);
+
+                    const secret = JSON.parse(passwordResponse.SecretString);
+                    const password = secret["password"];
+
+                    const roleInput = {
+                        resourceArn: event.ResourceProperties.AuroraDBClusterArn,
+                        secretArn: event.ResourceProperties.AuroraDBClusterAdminSecretArn,
+                        sql: `CREATE ROLE bedrock_user WITH LOGIN PASSWORD '${password}'`,
+                        database: event.ResourceProperties.AuroraDBName,
+                        continueAfterTimeout: true
+                    };
+
+                    const grantInput = {
+                        resourceArn: event.ResourceProperties.AuroraDBClusterArn,
+                        secretArn: event.ResourceProperties.AuroraDBClusterAdminSecretArn,
+                        sql: "GRANT ALL ON SCHEMA bedrock_integration TO bedrock_user;",
+                        database: event.ResourceProperties.AuroraDBName,
+                        continueAfterTimeout: true,
+                    };
+
+                    const vectorDimensions = event.ResourceProperties.VectorDimensions;
+                    const tableInput = {
+                        resourceArn: event.ResourceProperties.AuroraDBClusterArn,
+                        secretArn: event.ResourceProperties.BedrockUserSecretArn,
+                        sql: `CREATE TABLE bedrock_integration.bedrock_knowledge_base (id uuid PRIMARY KEY,embedding vector('${vectorDimensions}'),chunks text,metadata jsonb);`,
+                        database: event.ResourceProperties.AuroraDBName,
+                        continueAfterTimeout: true,
+                    };
+
+                    const vectorIndexInput = {
+                        resourceArn: event.ResourceProperties.AuroraDBClusterArn,
+                        secretArn: event.ResourceProperties.BedrockUserSecretArn,
+                        sql: "CREATE INDEX ON bedrock_integration.bedrock_knowledge_base USING hnsw (embedding vector_cosine_ops);",
+                        database: event.ResourceProperties.AuroraDBName,
+                        continueAfterTimeout: true,
+                    };
+
+                    const textIndexInput = {
+                      resourceArn: event.ResourceProperties.AuroraDBClusterArn,
+                      secretArn: event.ResourceProperties.BedrockUserSecretArn,
+                      sql: "CREATE INDEX ON bedrock_integration.bedrock_knowledge_base USING gin (to_tsvector('simple'::regconfig, chunks));",
+                      database: event.ResourceProperties.AuroraDBName,
+                      continueAfterTimeout: true,
+                    };
+
+                    const detachRolePolicyInput = {
+                        RoleName: event.ResourceProperties.SeedingLambdaRoleName,
+                        PolicyArn: event.ResourceProperties.SeedingLambdaPolicyArn
+                    };
+
+                    const deletePolicyInput = {
+                        PolicyArn: event.ResourceProperties.SeedingLambdaPolicyArn
+                    };
+
+                    const listRoleInlinePoliciesInput = {
+                        RoleName: event.ResourceProperties.SeedingLambdaRoleName
+                    };
+
+                    const deleteRoleInput = {
+                        RoleName: event.ResourceProperties.SeedingLambdaRoleName
+                    };
+
+                    const deleteFunctionInput = {
+                        FunctionName: event.ResourceProperties.SeedingFunctionName
+                    };
+
+                    const extensionCommand = new ExecuteStatementCommand(extensionInput);
+                    const schemaCommand = new ExecuteStatementCommand(schemaInput);
+                    const roleCommand = new ExecuteStatementCommand(roleInput);
+                    const grantCommand = new ExecuteStatementCommand(grantInput);
+                    const tableCommand = new ExecuteStatementCommand(tableInput);
+                    const vectorIndexCommand = new ExecuteStatementCommand(vectorIndexInput);
+                    const textIndexCommand = new ExecuteStatementCommand(textIndexInput);
+                    const detachRolePolicyCommand = new DetachRolePolicyCommand(detachRolePolicyInput);
+                    const deletePolicyCommand = new DeletePolicyCommand(deletePolicyInput);
+                    const listRoleInlinePoliciesCommand = new ListRolePoliciesCommand(listRoleInlinePoliciesInput);
+                    const deleteRoleCommand = new DeleteRoleCommand(deleteRoleInput);
+                    const deleteFunctionCommand = new DeleteFunctionCommand(deleteFunctionInput);
+
+                    const extensionResponse = await rdsClient.send(extensionCommand);
+                    const schemaResponse = await rdsClient.send(schemaCommand);
+                    const roleResponse = await rdsClient.send(roleCommand);
+                    const grantResponse = await rdsClient.send(grantCommand);
+                    const tableResponse = await rdsClient.send(tableCommand);
+                    const vectorIndexResponse = await rdsClient.send(vectorIndexCommand);
+                    const textIndexResponse = await rdsClient.send(textIndexCommand);
+                    const deleteFunctionResponse = await lambdaClient.send(deleteFunctionCommand);
+                    const detachPolicyResponse = await iamClient.send(detachRolePolicyCommand);
+
+                    const listRoleInlinePoliciesResponse = await iamClient.send(listRoleInlinePoliciesCommand);
+
+                    for (const inlinePolicyName of listRoleInlinePoliciesResponse.PolicyNames) {
+
+                        const deleteInlinePolicyInput = {
+                            RoleName: event.ResourceProperties.SeedingLambdaRoleName,
+                            PolicyName: inlinePolicyName
+                        }
+
+                        const deleteInlinePolicyCommand = new DeleteRolePolicyCommand(deleteInlinePolicyInput);
+                        const deleteInlinePolicyResponse = await iamClient.send(deleteInlinePolicyCommand);
+                    }
+
+                    const deleteRoleResponse = await iamClient.send(deleteRoleCommand);
+                    const deletePolicyResponse = await iamClient.send(deletePolicyCommand);
+
+                    var responseData = { Value: event.ResourceProperties.AuroraDBClusterArn, KBTags: bedrockTagInput, Reason: "Success" };
+                    await sendResponse(event, context, "SUCCESS", responseData);
+
+                } catch (err) {
+                    var responseData = { Value: event.ResourceProperties.AuroraDBClusterArn, Reason: err.toString() };
+                    await sendResponse(event, context, "FAILED", responseData);
+                }
+                return event.ResourceProperties.AuroraDBClusterArn;
+            };
+
+            async function sendResponse(event, context, responseStatus, responseData) {
+                let responsePromise = new Promise((resolve, reject) => {
+                    var responseBody = JSON.stringify({
+                        Status: responseStatus,
+                        Reason: responseData.Reason,
+                        PhysicalResourceId: event.LogicalResourceId,
+                        StackId: event.StackId,
+                        RequestId: event.RequestId,
+                        LogicalResourceId: event.LogicalResourceId,
+                        Data: responseData
+                    });
+
+                    var https = require("https");
+                    var url = require("url");
+                    var parsedUrl = url.parse(event.ResponseURL);
+                    var options = {
+                        hostname: parsedUrl.hostname,
+                        path: parsedUrl.path,
+                        method: "PUT",
+                        headers: {
+                            "content-type": "",
+                            "content-length": responseBody.length
+                        }
+                    };
+
+                    var request = https.request(options, function (response) {
+                        resolve(JSON.parse(responseBody));
+                        context.done();
+                    });
+                    request.on("error", function (error) {
+                        reject(error);
+                        context.done();
+                    });
+                    request.write(responseBody);
+                    request.end();
+                });
+                return await responsePromise;
+            };
+
+  SeedingStep:
+    Type: Custom::SeedingStep
+    Properties:
+      ServiceToken: !GetAtt SeedingFunction.Arn
+      AuroraDBClusterArn: !Sub "arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:cluster:${AuroraDBCluster}"
+      AuroraDBClusterAdminSecretArn: !GetAtt AuroraDBCluster.MasterUserSecret.SecretArn
+      AuroraDBName: !Ref AuroraDBName
+      BedrockUserSecretArn: !Sub "${BedrockUserSecret}"
+      VectorDimensions: !Ref BedrockKBEmbeddingModelDimensions
+      SeedingLambdaPolicyArn: !Ref SeedingLambdaRolePolicy
+      SeedingLambdaRoleName: !Ref SeedingLambdaRole
+      SeedingFunctionName: !Ref SeedingFunction
+      BedrockKBTags: !If [NoBedrockKBTags, [], !Ref BedrockKnowledgeBaseTags]
+      Timeout: 300
+    DependsOn: AuroraDBInstance
+
+  BedrockKnowledgeBaseRolePolicy:
+    Type: "AWS::IAM::ManagedPolicy"
+    Condition: NoBedrockKBRoleExists
+    Properties:
+      Description: Managed Policy for Models for Knowledge Bases
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: BedrockInvokeModelStatement
+            Effect: Allow
+            Action:
+              - 'bedrock:InvokeModel'
+            Resource:
+              - !Ref BedrockKBEmbeddingModelArn
+          - Sid: RdsDescribeStatementID
+            Effect: Allow
+            Action:
+              - 'rds:DescribeDBClusters'
+            Resource:
+              - !Sub "arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:cluster:${AuroraDBCluster}"
+          - Sid: DataAPIStatementID
+            Effect: Allow
+            Action:
+              - 'rds-data:ExecuteStatement'
+              - 'rds-data:BatchExecuteStatement'
+            Resource:
+              - !Sub "arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:cluster:${AuroraDBCluster}"
+          - Sid: SecretsManagerGetStatement
+            Effect: Allow
+            Action:
+              - 'secretsmanager:GetSecretValue'
+            Resource:
+              - !Sub "${BedrockUserSecret}"
+          - !If
+            - SecretsDefaultKMSKey
+            - !Ref 'AWS::NoValue'
+            - Sid: KMSDecryptStatement
+              Effect: Allow
+              Action:
+                - 'kms:Decrypt'
+              Resource:
+                - !Ref SecretsKMSKeyId
+              Condition:
+                StringEquals:
+                  kms:ViaService:
+                    - !Sub "secretsmanager.${AWS::Region}.amazonaws.com"
+
+  BedrockKnowledgeBaseRole:
+    Type: "AWS::IAM::Role"
+    Condition: NoBedrockKBRoleExists
+    Properties:
+      RoleName: !Ref BedrockServiceExecutionRoleName
+      Description: An execution role for Bedrock Knowledge base
+      Path: /service-role/
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Effect: Allow
+          Sid: BedrockRDSInstanceStatementID
+          Principal:
+            Service:
+              - bedrock.amazonaws.com
+          Action:
+            - 'sts:AssumeRole'
+          Condition:
+            StringEquals:
+              aws:SourceAccount: !Sub "${AWS::AccountId}"
+            ArnLike:
+              aws:SourceArn: !Sub "arn:${AWS::Partition}:bedrock:${AWS::Region}:${AWS::AccountId}:knowledge-base/*"
+      ManagedPolicyArns: [!Ref BedrockKnowledgeBaseRolePolicy]
+
+  BedrockKBDataSourcePolicy:
+    Type: "AWS::IAM::ManagedPolicy"
+    Condition: NoBedrockKBRoleExists
+    Properties:
+      Description: Managed Policy for Knowledge Base Data Sources
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: S3ListBucketStatement
+            Effect: Allow
+            Action:
+              - "s3:ListBucket"
+            Resource:
+              - !Ref DataSourceBucketArn1
+              - !If [DataSource2Provided, !Ref DataSourceBucketArn2, !Ref "AWS::NoValue"]
+              - !If [DataSource3Provided, !Ref DataSourceBucketArn3, !Ref "AWS::NoValue"]
+              - !If [DataSource4Provided, !Ref DataSourceBucketArn4, !Ref "AWS::NoValue"]
+              - !If [DataSource5Provided, !Ref DataSourceBucketArn5, !Ref "AWS::NoValue"]
+            Condition:
+              StringEquals:
+                aws:ResourceAccount:
+                  - !If [NoDataSource1AccountID, !Ref "AWS::AccountId" , !Ref DataSourceOwnerAccountId1]
+                  - !If [DataSource2Provided, !If [NoDataSource2AccountID, !Ref "AWS::AccountId" , !Ref DataSourceOwnerAccountId2], !Ref "AWS::NoValue"]
+                  - !If [DataSource3Provided, !If [NoDataSource3AccountID, !Ref "AWS::AccountId" , !Ref DataSourceOwnerAccountId3], !Ref "AWS::NoValue"]
+                  - !If [DataSource4Provided, !If [NoDataSource4AccountID, !Ref "AWS::AccountId" , !Ref DataSourceOwnerAccountId4], !Ref "AWS::NoValue"]
+                  - !If [DataSource5Provided, !If [NoDataSource5AccountID, !Ref "AWS::AccountId" , !Ref DataSourceOwnerAccountId5], !Ref "AWS::NoValue"]
+          - Sid: S3GetObjectStatement
+            Effect: Allow
+            Action:
+              - "s3:GetObject"
+            Resource:
+              - !If
+                  - IsDataSource1Object
+                  - !If [NoDataSource1InclustionPrefixes, !Ref DataSourceBucketArn1, !Join ["/", [!Ref DataSourceBucketArn1, !Join ["/", !Split [';', !Ref DataSourceInclusionPrefixes1]]]]]
+                  - !If [NoDataSource1InclustionPrefixes, !Join ["/", [!Ref DataSourceBucketArn1, '*']], !Join ["/", [!Ref DataSourceBucketArn1, !Join ["/", !Split [';', !Ref DataSourceInclusionPrefixes1]], '*']]]
+              - !If
+                  - IsDataSource1Object
+                  - !If [NoDataSource1InclustionPrefixes, !Join [ "", [!Ref DataSourceBucketArn1, ".metadata.json"]], !Join [ "", [!Join ["/", [!Ref DataSourceBucketArn1, !Join ["/", !Split [';', !Ref DataSourceInclusionPrefixes1]]]], ".metadata.json"]]]
+                  - !Ref "AWS::NoValue"
+              - !If
+                  - DataSource1TransformationLambdaPresent
+                  - !Join ["", [!Sub "arn:${AWS::Partition}:s3:::", !Select [1, !Split ['//', !Ref DataSourceTransformationS3URI1]], "/*" ]]
+                  - !Ref "AWS::NoValue"
+              - !If
+                  - IsDataSource2Object
+                  - !If [DataSource2Provided, !If [NoDataSource2InclustionPrefixes, !Ref DataSourceBucketArn2, !Join ["/", [!Ref DataSourceBucketArn2, !Join ["/", !Split [';', !Ref DataSourceInclusionPrefixes2]]]]], !Ref "AWS::NoValue"]
+                  - !If [DataSource2Provided, !If [NoDataSource2InclustionPrefixes, !Join ["/", [!Ref DataSourceBucketArn2, '*']], !Join ["/", [!Ref DataSourceBucketArn2, !Join ["/", !Split [';', !Ref DataSourceInclusionPrefixes2]], '*']]], !Ref "AWS::NoValue"]
+              - !If
+                  - IsDataSource2Object
+                  - !If [DataSource2Provided, !If [NoDataSource2InclustionPrefixes, !Join [ "", [!Ref DataSourceBucketArn2, ".metadata.json"]], !Join [ "", [!Join ["/", [!Ref DataSourceBucketArn2, !Join ["/", !Split [';', !Ref DataSourceInclusionPrefixes2]]]], ".metadata.json"]]], !Ref "AWS::NoValue"]
+                  - !Ref "AWS::NoValue"
+              - !If
+                  - DataSource2TransformationLambdaPresent
+                  - !Join ["", [!Sub "arn:${AWS::Partition}:s3:::", !Select [1, !Split ['//', !Ref DataSourceTransformationS3URI2]], "/*" ]]
+                  - !Ref "AWS::NoValue"
+              - !If
+                  - IsDataSource3Object
+                  - !If [DataSource3Provided, !If [NoDataSource3InclustionPrefixes, !Ref DataSourceBucketArn3, !Join ["/", [!Ref DataSourceBucketArn3, !Join ["/", !Split [';', !Ref DataSourceInclusionPrefixes3]]]]], !Ref "AWS::NoValue"]
+                  - !If [DataSource3Provided, !If [NoDataSource3InclustionPrefixes, !Join ["/", [!Ref DataSourceBucketArn3, '*']], !Join ["/", [!Ref DataSourceBucketArn3, !Join ["/", !Split [';', !Ref DataSourceInclusionPrefixes3]], '*']]], !Ref "AWS::NoValue"]
+              - !If
+                  - IsDataSource3Object
+                  - !If [DataSource3Provided, !If [NoDataSource3InclustionPrefixes, !Join [ "", [!Ref DataSourceBucketArn3, ".metadata.json"]], !Join [ "", [!Join ["/", [!Ref DataSourceBucketArn3, !Join ["/", !Split [';', !Ref DataSourceInclusionPrefixes3]]]], ".metadata.json"]]], !Ref "AWS::NoValue"]
+                  - !Ref "AWS::NoValue"
+              - !If
+                  - DataSource3TransformationLambdaPresent
+                  - !Join ["", [!Sub "arn:${AWS::Partition}:s3:::", !Select [1, !Split ['//', !Ref DataSourceTransformationS3URI3]], "/*" ]]
+                  - !Ref "AWS::NoValue"
+              - !If
+                  - IsDataSource4Object
+                  - !If [DataSource4Provided, !If [NoDataSource4InclustionPrefixes, !Ref DataSourceBucketArn4, !Join ["/", [!Ref DataSourceBucketArn4, !Join ["/", !Split [';', !Ref DataSourceInclusionPrefixes4]]]]], !Ref "AWS::NoValue"]
+                  - !If [DataSource4Provided, !If [NoDataSource4InclustionPrefixes, !Join ["/", [!Ref DataSourceBucketArn4, '*']], !Join ["/", [!Ref DataSourceBucketArn4, !Join ["/", !Split [';', !Ref DataSourceInclusionPrefixes4]], '*']]], !Ref "AWS::NoValue"]
+              - !If
+                  - IsDataSource4Object
+                  - !If [DataSource4Provided, !If [NoDataSource4InclustionPrefixes, !Join [ "", [!Ref DataSourceBucketArn4, ".metadata.json"]], !Join [ "", [!Join ["/", [!Ref DataSourceBucketArn4, !Join ["/", !Split [';', !Ref DataSourceInclusionPrefixes4]]]], ".metadata.json"]]], !Ref "AWS::NoValue"]
+                  - !Ref "AWS::NoValue"
+              - !If
+                  - DataSource4TransformationLambdaPresent
+                  - !Join ["", [!Sub "arn:${AWS::Partition}:s3:::", !Select [1, !Split ['//', !Ref DataSourceTransformationS3URI4]], "/*" ]]
+                  - !Ref "AWS::NoValue"
+              - !If
+                  - IsDataSource5Object
+                  - !If [DataSource5Provided, !If [NoDataSource5InclustionPrefixes, !Ref DataSourceBucketArn5, !Join ["/", [!Ref DataSourceBucketArn5, !Join ["/", !Split [';', !Ref DataSourceInclusionPrefixes5]]]]], !Ref "AWS::NoValue"]
+                  - !If [DataSource5Provided, !If [NoDataSource5InclustionPrefixes, !Join ["/", [!Ref DataSourceBucketArn5, '*']], !Join ["/", [!Ref DataSourceBucketArn5, !Join ["/", !Split [';', !Ref DataSourceInclusionPrefixes5]], '*']]], !Ref "AWS::NoValue"]
+              - !If
+                  - IsDataSource5Object
+                  - !If [DataSource5Provided, !If [NoDataSource5InclustionPrefixes, !Join [ "", [!Ref DataSourceBucketArn5, ".metadata.json"]], !Join [ "", [!Join ["/", [!Ref DataSourceBucketArn5, !Join ["/", !Split [';', !Ref DataSourceInclusionPrefixes5]]]], ".metadata.json"]]], !Ref "AWS::NoValue"]
+                  - !Ref "AWS::NoValue"
+              - !If
+                  - DataSource5TransformationLambdaPresent
+                  - !Join ["", [!Sub "arn:${AWS::Partition}:s3:::", !Select [1, !Split ['//', !Ref DataSourceTransformationS3URI5]], "/*" ]]
+                  - !Ref "AWS::NoValue"
+            Condition:
+              StringEquals:
+                aws:ResourceAccount:
+                  - !If [NoDataSource1AccountID, !Ref "AWS::AccountId" , !Ref DataSourceOwnerAccountId1]
+                  - !If [DataSource1TransformationLambdaPresent, !Ref "AWS::AccountId", !Ref "AWS::NoValue"]
+                  - !If [DataSource2Provided, !If [NoDataSource2AccountID, !Ref "AWS::AccountId" , !Ref DataSourceOwnerAccountId2], !Ref "AWS::NoValue"]
+                  - !If [DataSource2TransformationLambdaPresent, !Ref "AWS::AccountId", !Ref "AWS::NoValue"]
+                  - !If [DataSource3Provided, !If [NoDataSource3AccountID, !Ref "AWS::AccountId" , !Ref DataSourceOwnerAccountId3], !Ref "AWS::NoValue"]
+                  - !If [DataSource3TransformationLambdaPresent, !Ref "AWS::AccountId", !Ref "AWS::NoValue"]
+                  - !If [DataSource4Provided, !If [NoDataSource4AccountID, !Ref "AWS::AccountId" , !Ref DataSourceOwnerAccountId4], !Ref "AWS::NoValue"]
+                  - !If [DataSource4TransformationLambdaPresent, !Ref "AWS::AccountId", !Ref "AWS::NoValue"]
+                  - !If [DataSource5Provided, !If [NoDataSource5AccountID, !Ref "AWS::AccountId" , !Ref DataSourceOwnerAccountId5], !Ref "AWS::NoValue"]
+                  - !If [DataSource5TransformationLambdaPresent, !Ref "AWS::AccountId", !Ref "AWS::NoValue"]
+          - !If
+              - DataSourceBucketKmsKeysPresent
+              - Sid: KmsDecryptStatement
+                Effect: Allow
+                Action:
+                  - "kms:Decrypt"
+                Resource:
+                  - !If [DataSource1BucketKMSKeyArnProvided, !Ref DataSourceBucketKmsKeyArn1, !Ref "AWS::NoValue"]
+                  - !If [DataSource2BucketKMSKeyArnProvided, !Ref DataSourceBucketKmsKeyArn2, !Ref "AWS::NoValue"]
+                  - !If [DataSource3BucketKMSKeyArnProvided, !Ref DataSourceBucketKmsKeyArn3, !Ref "AWS::NoValue"]
+                  - !If [DataSource4BucketKMSKeyArnProvided, !Ref DataSourceBucketKmsKeyArn4, !Ref "AWS::NoValue"]
+                  - !If [DataSource5BucketKMSKeyArnProvided, !Ref DataSourceBucketKmsKeyArn5, !Ref "AWS::NoValue"]
+                Condition:
+                  StringEquals:
+                    kms:ViaService:
+                      - !Sub "s3.${AWS::Region}.amazonaws.com"
+              - !Ref "AWS::NoValue"
+          - !If
+              - DataSourceLambdasPresent
+              - Sid: LambdaInvokeFunctionStatement
+                Effect: Allow
+                Action:
+                  - "lambda:InvokeFunction"
+                Resource:
+                  - !If [DataSource1TransformationLambdaPresent, !Ref DataSourceTransformationLambdaArn1, !Ref "AWS::NoValue"]
+                  - !If [DataSource2TransformationLambdaPresent, !Ref DataSourceTransformationLambdaArn2, !Ref "AWS::NoValue"]
+                  - !If [DataSource3TransformationLambdaPresent, !Ref DataSourceTransformationLambdaArn3, !Ref "AWS::NoValue"]
+                  - !If [DataSource4TransformationLambdaPresent, !Ref DataSourceTransformationLambdaArn4, !Ref "AWS::NoValue"]
+                  - !If [DataSource5TransformationLambdaPresent, !Ref DataSourceTransformationLambdaArn5, !Ref "AWS::NoValue"]
+                Condition:
+                  StringEquals:
+                    aws:ResourceAccount: !Ref "AWS::AccountId"
+              - !Ref "AWS::NoValue"
+          - !If
+              - DataSourceLambdasPresent
+              - Sid: S3PutObjectStatement
+                Effect: Allow
+                Action:
+                  - "s3:PutObject"
+                Resource:
+                  - !If
+                    - DataSource1TransformationLambdaPresent
+                    - !Join ["", [!Sub "arn:${AWS::Partition}:s3:::", !Select [1, !Split ['//', !Ref DataSourceTransformationS3URI1]], "/*" ]]
+                    - !Ref "AWS::NoValue"
+                  - !If
+                    - DataSource2TransformationLambdaPresent
+                    - !Join ["", [!Sub "arn:${AWS::Partition}:s3:::", !Select [1, !Split ['//', !Ref DataSourceTransformationS3URI2]], "/*" ]]
+                    - !Ref "AWS::NoValue"
+                  - !If
+                    - DataSource3TransformationLambdaPresent
+                    - !Join ["", [!Sub "arn:${AWS::Partition}:s3:::", !Select [1, !Split ['//', !Ref DataSourceTransformationS3URI3]], "/*" ]]
+                    - !Ref "AWS::NoValue"
+                  - !If
+                    - DataSource4TransformationLambdaPresent
+                    - !Join ["", [!Sub "arn:${AWS::Partition}:s3:::", !Select [1, !Split ['//', !Ref DataSourceTransformationS3URI4]], "/*" ]]
+                    - !Ref "AWS::NoValue"
+                  - !If
+                    - DataSource5TransformationLambdaPresent
+                    - !Join ["", [!Sub "arn:${AWS::Partition}:s3:::", !Select [1, !Split ['//', !Ref DataSourceTransformationS3URI5]], "/*" ]]
+                    - !Ref "AWS::NoValue"
+                Condition:
+                  StringEquals:
+                    aws:ResourceAccount: !Ref "AWS::AccountId"
+              - !Ref "AWS::NoValue"
+          - !If
+              - DataSourceGenerateDataKmsKeysPresent
+              - Sid: KmsPermissionStatement
+                Effect: Allow
+                Action:
+                  - "kms:GenerateDataKey"
+                  - "kms:Decrypt"
+                Resource:
+                  - !If [DataSource1KMSKeyPresent, !Ref DataSourceKMSKeyArn1, !Ref "AWS::NoValue"]
+                  - !If [DataSource2KMSKeyPresent, !Ref DataSourceKMSKeyArn2, !Ref "AWS::NoValue"]
+                  - !If [DataSource3KMSKeyPresent, !Ref DataSourceKMSKeyArn3, !Ref "AWS::NoValue"]
+                  - !If [DataSource4KMSKeyPresent, !Ref DataSourceKMSKeyArn4, !Ref "AWS::NoValue"]
+                  - !If [DataSource5KMSKeyPresent, !Ref DataSourceKMSKeyArn5, !Ref "AWS::NoValue"]
+                  - !If [DataSource1TransformationS3KMSKeyArnProvided, !Ref DataSourceTransformationS3KmsKeyArn1, !Ref "AWS::NoValue"]
+                  - !If [DataSource2TransformationS3KMSKeyArnProvided, !Ref DataSourceTransformationS3KmsKeyArn2, !Ref "AWS::NoValue"]
+                  - !If [DataSource3TransformationS3KMSKeyArnProvided, !Ref DataSourceTransformationS3KmsKeyArn3, !Ref "AWS::NoValue"]
+                  - !If [DataSource4TransformationS3KMSKeyArnProvided, !Ref DataSourceTransformationS3KmsKeyArn4, !Ref "AWS::NoValue"]
+                  - !If [DataSource5TransformationS3KMSKeyArnProvided, !Ref DataSourceTransformationS3KmsKeyArn5, !Ref "AWS::NoValue"]
+              - !Ref "AWS::NoValue"
+          - !If
+              - DataSourceParsingModelsPresent
+              - Sid: BedrockInvokeModelStatement
+                Effect: Allow
+                Action:
+                  - 'bedrock:InvokeModel'
+                Resource:
+                  - !If [DefaultDataSource1ParsingStrategy, !Ref "AWS::NoValue", !Ref DataSourceParsingModelArn1]
+                  - !If [DefaultDataSource2ParsingStrategy, !Ref "AWS::NoValue", !Ref DataSourceParsingModelArn2]
+                  - !If [DefaultDataSource3ParsingStrategy, !Ref "AWS::NoValue", !Ref DataSourceParsingModelArn3]
+                  - !If [DefaultDataSource4ParsingStrategy, !Ref "AWS::NoValue", !Ref DataSourceParsingModelArn4]
+                  - !If [DefaultDataSource5ParsingStrategy, !Ref "AWS::NoValue", !Ref DataSourceParsingModelArn5]
+              - !Ref "AWS::NoValue"
+      Roles: [!Ref BedrockKnowledgeBaseRole]
+
+  BedrockKnowledgeBase:
+    Type: AWS::Bedrock::KnowledgeBase
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks: [ E3001 ]
+          ignore_reasons:
+            - E3001: False positive for region interop
+    Properties:
+      Name: !Ref BedrockKnowledgeBaseName
+      Description: !If [NoBedrockKBDescription, !Ref "AWS::NoValue", !Ref BedrockKnowledgeBaseDescription]
+      RoleArn: !If
+                - NoBedrockKBRoleExists
+                - !GetAtt BedrockKnowledgeBaseRole.Arn
+                - !Ref ExistingBedrockServiceExecutionRoleArn
+      KnowledgeBaseConfiguration:
+        Type: VECTOR
+        VectorKnowledgeBaseConfiguration:
+          EmbeddingModelArn: !Ref BedrockKBEmbeddingModelArn
+          EmbeddingModelConfiguration:
+            BedrockEmbeddingModelConfiguration:
+              Dimensions: !If [ConfigurableModelDimensions, !Ref BedrockKBEmbeddingModelDimensions, !Ref "AWS::NoValue"]
+      StorageConfiguration:
+        Type: "RDS"
+        RdsConfiguration:
+          ResourceArn: !Sub "arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:cluster:${AuroraDBCluster}"
+          CredentialsSecretArn: !Sub "${BedrockUserSecret}"
+          DatabaseName: !Ref AuroraDBName
+          TableName: 'bedrock_integration.bedrock_knowledge_base'
+          FieldMapping:
+            VectorField: "embedding"
+            TextField: "chunks"
+            MetadataField: "metadata"
+            PrimaryKeyField: "id"
+      Tags:
+        !If
+          - NoBedrockKBTags
+          - !Ref "AWS::NoValue"
+          - !GetAtt SeedingStep.KBTags
+    DependsOn: SeedingStep
+
+  BedrockKBDeliverySource:
+    Type: AWS::Logs::DeliverySource
+    Condition: LoggingEnabled
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks: [ E1010 ]
+          ignore_reasons:
+            - E1010: False positive for BedrockKnowledgeBase.KnowledgeBaseArn
+    Properties:
+      LogType: APPLICATION_LOGS
+      Name: !Sub
+              - knowledge-base-delivery-source-${BedrockKnowledgeBaseId}
+              - BedrockKnowledgeBaseId: !Ref BedrockKnowledgeBase
+      ResourceArn: !GetAtt BedrockKnowledgeBase.KnowledgeBaseArn
+
+  BedrockKBCloudWatchLogGroup:
+    Type: AWS::Logs::LogGroup
+    Condition: BedrockCWLoggingEnabledwithNewLogGroup
+    Properties:
+      LogGroupName: !If
+                      - BedrockCWKnowledgeBaseIDInLogGroupName
+                      - !Join ['', [!Ref KnowledgeBasePrefixCWLogGroupName, !Ref BedrockKnowledgeBase, !Ref KnowledgeBaseSuffixCWLogGroupName]]
+                      - !Ref KnowledgeBasePrefixCWLogGroupName
+
+  BedrockKBDeliveryDestinationCW:
+    Type: AWS::Logs::DeliveryDestination
+    Condition: BedrockCWLoggingEnabled
+    Properties:
+      DestinationResourceArn: !If [BedrockCWLoggingEnabledwithNewLogGroup, !GetAtt BedrockKBCloudWatchLogGroup.Arn, !Ref KnowledgeBaseDeliveryDestinationCW]
+      Name: !Sub
+              - knowledge-base-cloudwatch-delivery-destination-${BedrockKnowledgeBaseId}
+              - BedrockKnowledgeBaseId: !Ref BedrockKnowledgeBase
+
+  BedrockKBDeliveryCW:
+    Type: AWS::Logs::Delivery
+    Condition: BedrockCWLoggingEnabled
+    Properties:
+      DeliveryDestinationArn: !GetAtt BedrockKBDeliveryDestinationCW.Arn
+      DeliverySourceName: !Sub
+                            - knowledge-base-delivery-source-${BedrockKnowledgeBaseId}
+                            - BedrockKnowledgeBaseId: !Ref BedrockKnowledgeBase
+    DependsOn: BedrockKBDeliverySource
+
+  BedrockKBDeliveryDestinationS3:
+    Type: AWS::Logs::DeliveryDestination
+    Condition: BedrockS3LoggingEnabledSameAccount
+    Properties:
+      DestinationResourceArn: !Ref KnowledgeBaseDeliveryDestinationS3
+      Name: !Sub
+              - knowledge-base-s3-delivery-destination-${BedrockKnowledgeBaseId}
+              - BedrockKnowledgeBaseId: !Ref BedrockKnowledgeBase
+
+  BedrockKBDeliveryS3:
+    Type: AWS::Logs::Delivery
+    Condition: BedrockS3LoggingEnabled
+    Properties:
+      DeliveryDestinationArn: !If [BedrockS3LoggingEnabledSameAccount, !GetAtt BedrockKBDeliveryDestinationS3.Arn, !Ref KnowledgeBaseDeliveryDestinationS3CrossAccount]
+      DeliverySourceName: !Sub
+                            - knowledge-base-delivery-source-${BedrockKnowledgeBaseId}
+                            - BedrockKnowledgeBaseId: !Ref BedrockKnowledgeBase
+    DependsOn: BedrockKBDeliverySource
+
+  BedrockKBDeliveryDestinationDF:
+    Type: AWS::Logs::DeliveryDestination
+    Condition: BedrockDFLoggingEnabledSameAccount
+    Properties:
+      DestinationResourceArn: !Ref KnowledgeBaseDeliveryDestinationDF
+      Name: !Sub
+              - knowledge-base-datafirehose-delivery-destination-${BedrockKnowledgeBaseId}
+              - BedrockKnowledgeBaseId: !Ref BedrockKnowledgeBase
+
+  BedrockKBDeliveryDF:
+    Type: AWS::Logs::Delivery
+    Condition: BedrockDFLoggingEnabled
+    Properties:
+      DeliveryDestinationArn: !If [BedrockDFLoggingEnabledSameAccount, !GetAtt BedrockKBDeliveryDestinationDF.Arn, !Ref KnowledgeBaseDeliveryDestinationDFCrossAccount]
+      DeliverySourceName: !Sub
+                            - knowledge-base-delivery-source-${BedrockKnowledgeBaseId}
+                            - BedrockKnowledgeBaseId: !Ref BedrockKnowledgeBase
+    DependsOn: BedrockKBDeliverySource
+
+  BedrockKBDataSource1:
+    Type: AWS::Bedrock::DataSource
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks: [ E3001 ]
+          ignore_reasons:
+            - E3001: False positive for region interop
+    Properties:
+      Name: !Ref DataSourceName1
+      Description: !If [NoDataSource1Description, !Ref "AWS::NoValue", !Ref DataSourceDescription1]
+      KnowledgeBaseId: !Ref BedrockKnowledgeBase
+      DataDeletionPolicy: !Ref DataSourceDeletionPolicy1
+      DataSourceConfiguration:
+        Type: S3
+        S3Configuration:
+          BucketArn: !Ref DataSourceBucketArn1
+          BucketOwnerAccountId: !If [NoDataSource1AccountID, !Ref "AWS::NoValue", !Ref DataSourceOwnerAccountId1]
+          InclusionPrefixes: !If [NoDataSource1InclustionPrefixes, !Ref "AWS::NoValue", !Split [';', !Ref DataSourceInclusionPrefixes1]]
+      ServerSideEncryptionConfiguration:
+        !If
+          - DataSource1KMSKeyPresent
+          - KmsKeyArn: !Ref DataSourceKMSKeyArn1
+          - !Ref "AWS::NoValue"
+      VectorIngestionConfiguration:
+        ChunkingConfiguration:
+          !If
+              - DefaultDataSource1Chunking
+              - !Ref "AWS::NoValue"
+              - ChunkingStrategy: !Ref DataSourceChunkingStrategy1
+                FixedSizeChunkingConfiguration:
+                  !If
+                    - FixedSizeDataSource1Chunking
+                    - MaxTokens: !Ref DataSourceFixedSizeMaxTokens1
+                      OverlapPercentage: !Ref DataSourceFixedSizeOverlapPercentage1
+                    - !Ref "AWS::NoValue"
+                HierarchicalChunkingConfiguration:
+                  !If
+                    - HierarchicalDataSource1Chunking
+                    - LevelConfigurations:
+                      - MaxTokens: !Ref DataSourceHierarchicalMaxParentTokens1
+                      - MaxTokens: !Ref DataSourceHierarchicalMaxChildTokens1
+                      OverlapTokens: !Ref DataSourceHierarchicalOverlapTokens1
+                    - !Ref "AWS::NoValue"
+                SemanticChunkingConfiguration:
+                  !If
+                    - SemanticDataSource1Chunking
+                    - BreakpointPercentileThreshold: !Ref DataSourceSemanticBreakpointPercentile1
+                      BufferSize: !Ref DataSourceSemanticBufferSize1
+                      MaxTokens: !Ref DataSourceSemanticMaxTokens1
+                    - !Ref "AWS::NoValue"
+        CustomTransformationConfiguration:
+          !If
+            - DataSource1TransformationLambdaPresent
+            - IntermediateStorage:
+                S3Location:
+                  URI: !Ref DataSourceTransformationS3URI1
+              Transformations:
+              - StepToApply: !Ref DataSourceTransformationStepToApply1
+                TransformationFunction:
+                  TransformationLambdaConfiguration:
+                    LambdaArn: !Ref DataSourceTransformationLambdaArn1
+            - !Ref "AWS::NoValue"
+        ParsingConfiguration:
+          !If
+            - DefaultDataSource1ParsingStrategy
+            - !Ref "AWS::NoValue"
+            - BedrockFoundationModelConfiguration:
+                ModelArn: !Ref DataSourceParsingModelArn1
+                ParsingPrompt:
+                  !If
+                    - NoDataSource1ParsingPrompt
+                    - !Ref "AWS::NoValue"
+                    - ParsingPromptText: !Ref DataSourceParsingPromptText1
+              ParsingStrategy: !Ref DataSourceParsingStrategy1
+
+  BedrockKBDataSource2:
+    Type: AWS::Bedrock::DataSource
+    Condition: DataSource2Provided
+    Properties:
+      Name: !Ref DataSourceName2
+      Description: !If [NoDataSource2Description, !Ref "AWS::NoValue", !Ref DataSourceDescription2]
+      KnowledgeBaseId: !Ref BedrockKnowledgeBase
+      DataDeletionPolicy: !Ref DataSourceDeletionPolicy2
+      DataSourceConfiguration:
+        Type: S3
+        S3Configuration:
+          BucketArn: !Ref DataSourceBucketArn2
+          BucketOwnerAccountId: !If [NoDataSource2AccountID, !Ref "AWS::NoValue", !Ref DataSourceOwnerAccountId2]
+          InclusionPrefixes: !If [NoDataSource2InclustionPrefixes, !Ref "AWS::NoValue", !Split [';', !Ref DataSourceInclusionPrefixes2]]
+      ServerSideEncryptionConfiguration:
+        !If
+          - DataSource2KMSKeyPresent
+          - KmsKeyArn: !Ref DataSourceKMSKeyArn2
+          - !Ref "AWS::NoValue"
+      VectorIngestionConfiguration:
+        ChunkingConfiguration:
+          !If
+              - DefaultDataSource2Chunking
+              - !Ref "AWS::NoValue"
+              - ChunkingStrategy: !Ref DataSourceChunkingStrategy2
+                FixedSizeChunkingConfiguration:
+                  !If
+                    - FixedSizeDataSource2Chunking
+                    - MaxTokens: !Ref DataSourceFixedSizeMaxTokens2
+                      OverlapPercentage: !Ref DataSourceFixedSizeOverlapPercentage2
+                    - !Ref "AWS::NoValue"
+                HierarchicalChunkingConfiguration:
+                  !If
+                    - HierarchicalDataSource2Chunking
+                    - LevelConfigurations:
+                      - MaxTokens: !Ref DataSourceHierarchicalMaxParentTokens2
+                      - MaxTokens: !Ref DataSourceHierarchicalMaxChildTokens2
+                      OverlapTokens: !Ref DataSourceHierarchicalOverlapTokens2
+                    - !Ref "AWS::NoValue"
+                SemanticChunkingConfiguration:
+                  !If
+                    - SemanticDataSource2Chunking
+                    - BreakpointPercentileThreshold: !Ref DataSourceSemanticBreakpointPercentile2
+                      BufferSize: !Ref DataSourceSemanticBufferSize2
+                      MaxTokens: !Ref DataSourceSemanticMaxTokens2
+                    - !Ref "AWS::NoValue"
+        CustomTransformationConfiguration:
+          !If
+            - DataSource2TransformationLambdaPresent
+            - IntermediateStorage:
+                S3Location:
+                  URI: !Ref DataSourceTransformationS3URI2
+              Transformations:
+              - StepToApply: !Ref DataSourceTransformationStepToApply2
+                TransformationFunction:
+                  TransformationLambdaConfiguration:
+                    LambdaArn: !Ref DataSourceTransformationLambdaArn2
+            - !Ref "AWS::NoValue"
+        ParsingConfiguration:
+          !If
+            - DefaultDataSource2ParsingStrategy
+            - !Ref "AWS::NoValue"
+            - BedrockFoundationModelConfiguration:
+                ModelArn: !Ref DataSourceParsingModelArn2
+                ParsingPrompt:
+                  !If
+                    - NoDataSource2ParsingPrompt
+                    - !Ref "AWS::NoValue"
+                    - ParsingPromptText: !Ref DataSourceParsingPromptText2
+              ParsingStrategy: !Ref DataSourceParsingStrategy2
+
+  BedrockKBDataSource3:
+    Type: AWS::Bedrock::DataSource
+    Condition: DataSource3Provided
+    Properties:
+      Name: !Ref DataSourceName3
+      Description: !If [NoDataSource3Description, !Ref "AWS::NoValue", !Ref DataSourceDescription3]
+      KnowledgeBaseId: !Ref BedrockKnowledgeBase
+      DataDeletionPolicy: !Ref DataSourceDeletionPolicy3
+      DataSourceConfiguration:
+        Type: S3
+        S3Configuration:
+          BucketArn: !Ref DataSourceBucketArn3
+          BucketOwnerAccountId: !If [NoDataSource3AccountID, !Ref "AWS::NoValue", !Ref DataSourceOwnerAccountId3]
+          InclusionPrefixes: !If [NoDataSource3InclustionPrefixes, !Ref "AWS::NoValue", !Split [';', !Ref DataSourceInclusionPrefixes3]]
+      ServerSideEncryptionConfiguration:
+        !If
+          - DataSource3KMSKeyPresent
+          - KmsKeyArn: !Ref DataSourceKMSKeyArn3
+          - !Ref "AWS::NoValue"
+      VectorIngestionConfiguration:
+        ChunkingConfiguration:
+          !If
+              - DefaultDataSource3Chunking
+              - !Ref "AWS::NoValue"
+              - ChunkingStrategy: !Ref DataSourceChunkingStrategy3
+                FixedSizeChunkingConfiguration:
+                  !If
+                    - FixedSizeDataSource3Chunking
+                    - MaxTokens: !Ref DataSourceFixedSizeMaxTokens3
+                      OverlapPercentage: !Ref DataSourceFixedSizeOverlapPercentage3
+                    - !Ref "AWS::NoValue"
+                HierarchicalChunkingConfiguration:
+                  !If
+                    - HierarchicalDataSource3Chunking
+                    - LevelConfigurations:
+                      - MaxTokens: !Ref DataSourceHierarchicalMaxParentTokens3
+                      - MaxTokens: !Ref DataSourceHierarchicalMaxChildTokens3
+                      OverlapTokens: !Ref DataSourceHierarchicalOverlapTokens3
+                    - !Ref "AWS::NoValue"
+                SemanticChunkingConfiguration:
+                  !If
+                    - SemanticDataSource3Chunking
+                    - BreakpointPercentileThreshold: !Ref DataSourceSemanticBreakpointPercentile3
+                      BufferSize: !Ref DataSourceSemanticBufferSize3
+                      MaxTokens: !Ref DataSourceSemanticMaxTokens3
+                    - !Ref "AWS::NoValue"
+        CustomTransformationConfiguration:
+          !If
+            - DataSource3TransformationLambdaPresent
+            - IntermediateStorage:
+                S3Location:
+                  URI: !Ref DataSourceTransformationS3URI3
+              Transformations:
+              - StepToApply: !Ref DataSourceTransformationStepToApply3
+                TransformationFunction:
+                  TransformationLambdaConfiguration:
+                    LambdaArn: !Ref DataSourceTransformationLambdaArn3
+            - !Ref "AWS::NoValue"
+        ParsingConfiguration:
+          !If
+            - DefaultDataSource3ParsingStrategy
+            - !Ref "AWS::NoValue"
+            - BedrockFoundationModelConfiguration:
+                ModelArn: !Ref DataSourceParsingModelArn3
+                ParsingPrompt:
+                  !If
+                    - NoDataSource3ParsingPrompt
+                    - !Ref "AWS::NoValue"
+                    - ParsingPromptText: !Ref DataSourceParsingPromptText3
+              ParsingStrategy: !Ref DataSourceParsingStrategy3
+
+  BedrockKBDataSource4:
+    Type: AWS::Bedrock::DataSource
+    Condition: DataSource4Provided
+    Properties:
+      Name: !Ref DataSourceName4
+      Description: !If [NoDataSource4Description, !Ref "AWS::NoValue", !Ref DataSourceDescription4]
+      KnowledgeBaseId: !Ref BedrockKnowledgeBase
+      DataDeletionPolicy: !Ref DataSourceDeletionPolicy4
+      DataSourceConfiguration:
+        Type: S3
+        S3Configuration:
+          BucketArn: !Ref DataSourceBucketArn4
+          BucketOwnerAccountId: !If [NoDataSource4AccountID, !Ref "AWS::NoValue", !Ref DataSourceOwnerAccountId4]
+          InclusionPrefixes: !If [NoDataSource4InclustionPrefixes, !Ref "AWS::NoValue", !Split [';', !Ref DataSourceInclusionPrefixes4]]
+      ServerSideEncryptionConfiguration:
+        !If
+          - DataSource4KMSKeyPresent
+          - KmsKeyArn: !Ref DataSourceKMSKeyArn4
+          - !Ref "AWS::NoValue"
+      VectorIngestionConfiguration:
+        ChunkingConfiguration:
+          !If
+              - DefaultDataSource4Chunking
+              - !Ref "AWS::NoValue"
+              - ChunkingStrategy: !Ref DataSourceChunkingStrategy4
+                FixedSizeChunkingConfiguration:
+                  !If
+                    - FixedSizeDataSource4Chunking
+                    - MaxTokens: !Ref DataSourceFixedSizeMaxTokens4
+                      OverlapPercentage: !Ref DataSourceFixedSizeOverlapPercentage4
+                    - !Ref "AWS::NoValue"
+                HierarchicalChunkingConfiguration:
+                  !If
+                    - HierarchicalDataSource4Chunking
+                    - LevelConfigurations:
+                      - MaxTokens: !Ref DataSourceHierarchicalMaxParentTokens4
+                      - MaxTokens: !Ref DataSourceHierarchicalMaxChildTokens4
+                      OverlapTokens: !Ref DataSourceHierarchicalOverlapTokens4
+                    - !Ref "AWS::NoValue"
+                SemanticChunkingConfiguration:
+                  !If
+                    - SemanticDataSource4Chunking
+                    - BreakpointPercentileThreshold: !Ref DataSourceSemanticBreakpointPercentile4
+                      BufferSize: !Ref DataSourceSemanticBufferSize4
+                      MaxTokens: !Ref DataSourceSemanticMaxTokens4
+                    - !Ref "AWS::NoValue"
+        CustomTransformationConfiguration:
+          !If
+            - DataSource4TransformationLambdaPresent
+            - IntermediateStorage:
+                S3Location:
+                  URI: !Ref DataSourceTransformationS3URI4
+              Transformations:
+              - StepToApply: !Ref DataSourceTransformationStepToApply4
+                TransformationFunction:
+                  TransformationLambdaConfiguration:
+                    LambdaArn: !Ref DataSourceTransformationLambdaArn4
+            - !Ref "AWS::NoValue"
+        ParsingConfiguration:
+          !If
+            - DefaultDataSource4ParsingStrategy
+            - !Ref "AWS::NoValue"
+            - BedrockFoundationModelConfiguration:
+                ModelArn: !Ref DataSourceParsingModelArn4
+                ParsingPrompt:
+                  !If
+                    - NoDataSource4ParsingPrompt
+                    - !Ref "AWS::NoValue"
+                    - ParsingPromptText: !Ref DataSourceParsingPromptText4
+              ParsingStrategy: !Ref DataSourceParsingStrategy4
+
+  BedrockKBDataSource5:
+    Type: AWS::Bedrock::DataSource
+    Condition: DataSource5Provided
+    Properties:
+      Name: !Ref DataSourceName5
+      Description: !If [NoDataSource5Description, !Ref "AWS::NoValue", !Ref DataSourceDescription5]
+      KnowledgeBaseId: !Ref BedrockKnowledgeBase
+      DataDeletionPolicy: !Ref DataSourceDeletionPolicy5
+      DataSourceConfiguration:
+        Type: S3
+        S3Configuration:
+          BucketArn: !Ref DataSourceBucketArn5
+          BucketOwnerAccountId: !If [NoDataSource5AccountID, !Ref "AWS::NoValue", !Ref DataSourceOwnerAccountId5]
+          InclusionPrefixes: !If [NoDataSource5InclustionPrefixes, !Ref "AWS::NoValue", !Split [';', !Ref DataSourceInclusionPrefixes5]]
+      ServerSideEncryptionConfiguration:
+        !If
+          - DataSource5KMSKeyPresent
+          - KmsKeyArn: !Ref DataSourceKMSKeyArn5
+          - !Ref "AWS::NoValue"
+      VectorIngestionConfiguration:
+        ChunkingConfiguration:
+          !If
+              - DefaultDataSource5Chunking
+              - !Ref "AWS::NoValue"
+              - ChunkingStrategy: !Ref DataSourceChunkingStrategy5
+                FixedSizeChunkingConfiguration:
+                  !If
+                    - FixedSizeDataSource5Chunking
+                    - MaxTokens: !Ref DataSourceFixedSizeMaxTokens5
+                      OverlapPercentage: !Ref DataSourceFixedSizeOverlapPercentage5
+                    - !Ref "AWS::NoValue"
+                HierarchicalChunkingConfiguration:
+                  !If
+                    - HierarchicalDataSource5Chunking
+                    - LevelConfigurations:
+                      - MaxTokens: !Ref DataSourceHierarchicalMaxParentTokens5
+                      - MaxTokens: !Ref DataSourceHierarchicalMaxChildTokens5
+                      OverlapTokens: !Ref DataSourceHierarchicalOverlapTokens5
+                    - !Ref "AWS::NoValue"
+                SemanticChunkingConfiguration:
+                  !If
+                    - SemanticDataSource5Chunking
+                    - BreakpointPercentileThreshold: !Ref DataSourceSemanticBreakpointPercentile5
+                      BufferSize: !Ref DataSourceSemanticBufferSize5
+                      MaxTokens: !Ref DataSourceSemanticMaxTokens5
+                    - !Ref "AWS::NoValue"
+        CustomTransformationConfiguration:
+          !If
+            - DataSource5TransformationLambdaPresent
+            - IntermediateStorage:
+                S3Location:
+                  URI: !Ref DataSourceTransformationS3URI5
+              Transformations:
+              - StepToApply: !Ref DataSourceTransformationStepToApply5
+                TransformationFunction:
+                  TransformationLambdaConfiguration:
+                    LambdaArn: !Ref DataSourceTransformationLambdaArn5
+            - !Ref "AWS::NoValue"
+        ParsingConfiguration:
+          !If
+            - DefaultDataSource5ParsingStrategy
+            - !Ref "AWS::NoValue"
+            - BedrockFoundationModelConfiguration:
+                ModelArn: !Ref DataSourceParsingModelArn5
+                ParsingPrompt:
+                  !If
+                    - NoDataSource5ParsingPrompt
+                    - !Ref "AWS::NoValue"
+                    - ParsingPromptText: !Ref DataSourceParsingPromptText5
+              ParsingStrategy: !Ref DataSourceParsingStrategy5
+
