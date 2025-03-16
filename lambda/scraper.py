@@ -8,7 +8,7 @@ import logging
 from scrapy.crawler import CrawlerProcess
 
 # AWS S3 Configuration
-S3_BUCKET_NAME = "palmettotestbucket202503"
+S3_BUCKET_NAME = "palmetto-docs"
 GITHUB_S3_FOLDER = "github-md-files"
 WEBSITE_S3_FOLDER = "website-html-files"
 
