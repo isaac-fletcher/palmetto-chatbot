@@ -5,9 +5,11 @@ import logging
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+# Update with appropriate values
 FLOWALIAS=""
 FLOWID=""
-INPUTNODE=""
+NODE="FlowInputNode"
+OUTPUTNAME="document"
 
 def lambda_handler(event, context):
     """
@@ -17,17 +19,16 @@ def lambda_handler(event, context):
     context - Context in which the function is called.
     """
 
-    # retrieve text from the request
+    # Retrieve text from the request
     message = event.get("text") 
 
     client = boto3.client('bedrock-agent-runtime')
 
-    # take the message and do any processing on it needed
-    # probably best to do json to minimize data parsing
+    # Take the message and do any processing on it needed
+    # Probably best to do json to minimize data parsing
 
-    # invoke the flow
+    # Invoke the flow
     flow = client.invoke_flow(
-            enableTrace=True,
             flowAliasIdentifier=FLOWALIAS,
             flowIdentifier=FLOWID,
             inputs=[
@@ -35,19 +36,35 @@ def lambda_handler(event, context):
                     'content': {
                         'document': message
                     },
-                    # can specify specific inputs/outputs
-                    # nodeInputName / nodeOutputName
-                    nodeName=INPUTNODE
+                    'nodeName': NODE,
+                    'nodeOutputName': OUTPUTNAME
                 },
             ],
     )
 
-    # response from the model
-    output = flow['responseStream']['flowOutputEvent']['content']['document']
+    # Response from the model
+    flow_stream = flow['responseStream']
+    flow_exception = None
+    flow_output = ""
 
-    # add error handling if the flow fails
+    for event in flow_stream:
+        # Grab key from event and check if it's an exception
+        key = next(iter(event.keys()))
+        
+        if "Exception" in key:
+            exception = item
+            break
+        
+        # If not an exception, check if it is the flow output
+        if "flowOutputEvent" in key:
+            output = event['flowOutputEvent']['content']['document']
 
-    # this response will be sent back to Mattermost
+    # Error handling for if the flow fails
+    if flow_exception:
+        logger.error("Flow failed to execute: %s", flow_exception)
+        raise Exception(flow_exception)
+
+    # This response will be sent back to Mattermost
     response = {
         "statusCode": 200,
         "body": {
@@ -59,3 +76,4 @@ def lambda_handler(event, context):
     # log response
     logger.info("Response: %s", response)
     return response
+
