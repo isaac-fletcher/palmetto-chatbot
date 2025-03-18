@@ -44,25 +44,20 @@ def lambda_handler(event, context):
 
     # Response from the model
     flow_stream = flow['responseStream']
-    flow_exception = None
     flow_output = ""
 
     for event in flow_stream:
         # Grab key from event and check if it's an exception
         key = next(iter(event.keys()))
-        
+   
+        # Error handling for if the flow fails
         if "Exception" in key:
-            exception = item
-            break
+            logger.error("Flow failed to execute: %s", flow_exception)
+            raise Exception(flow_exception)
         
         # If not an exception, check if it is the flow output
         if "flowOutputEvent" in key:
             output = event['flowOutputEvent']['content']['document']
-
-    # Error handling for if the flow fails
-    if flow_exception:
-        logger.error("Flow failed to execute: %s", flow_exception)
-        raise Exception(flow_exception)
 
     # This response will be sent back to Mattermost
     response = {
