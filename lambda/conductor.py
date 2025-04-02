@@ -144,15 +144,15 @@ def lambda_handler(event, context):
                 flow_config["alias"],
                 original_message  # Send the original question
             )
-        else: # Category not in list
-            logger.info(f"Unhandled category: {category}")
-            flow_config = FLOW_CONFIGS[category]
+        else:  # Category not in list
+            logger.info(f"Unhandled category: {category}, routing to default flow")
             final_response = invoke_flow(
                 client,
-                "WTH2ZGG99J", # Default Flow ID
-                "WI5LIDP321", # Default Flow Alias
+                "WTH2ZGG99J",  # Default Flow ID
+                "WI5LIDP321",  # Default Flow Alias
                 original_message  # Send the original question
             )
+
 
         # Return the response
         # statusCode: 200,
