@@ -62,6 +62,10 @@ FLOW_CONFIGS = {
     "DATA_RECOVERY": {
         "alias": "ES5HSKCUYO",
         "id": "ZKJSN39VAB"
+    },
+    "INFORMATION_SECURITY": {
+        "alias": "58VPS39F8P",
+        "id": "PVYZSHVZN6"
     }
 }
 
