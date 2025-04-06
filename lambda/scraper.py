@@ -8,24 +8,49 @@ import logging
 from scrapy.crawler import CrawlerProcess
 
 # AWS S3 Configuration
-S3_BUCKET_NAME = "palmetto-docs"
+DOCUMENTATION_BUCKET = "palmetto-docs"
+POLICY_BUCKET = "ccit-docs"
 GITHUB_S3_FOLDER = "github-md-files"
 WEBSITE_S3_FOLDER = "website-html-files"
+HARDWARE_S3_FOLDER = "lambda-responses"
+
+DOCUMENTATION_REPOS = [
+    "https://github.com/clemsonciti/palmetto-examples"
+]
+    
+DOCUMENTATION_SITES = [
+    "https://docs.rcd.clemson.edu/",
+    "https://slurm.schedmd.com/documentation.html",
+    "https://docs.globus.org/globus-connect-personal/",
+    "https://docs.globus.org/guides/tutorials/manage-files/transfer-files/",
+    "https://docs.globus.org/guides/tutorials/manage-files/share-files/",
+    "https://clemsonciti.github.io/rcde_workshops/index.html",
+    "https://github.com/clemsonciti/palmetto-examples"
+]
+
+POLICY_SITES = [
+    "https://ccit.clemson.edu/cybersecurity/policy/",
+    "https://clemsonpub.cfmnetwork.com/"
+]
 
 http = urllib3.PoolManager()
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+# Adding lambda client
+lambda_client = boto3.client('lambda')
+
 def get_github_files(repo_url, file_type):
     """
     Fetches files of a specific type from a public GitHub repository.
     """
+    
     repo_api_url = repo_url.replace("github.com", "api.github.com/repos")
     
     repo_response = http.request('GET', repo_api_url)
     if repo_response.status != 200:
-        print(f"Error fetching repository metadata: HTTP {repo_response.status}")
+        logger.info(f"Error fetching repository metadata: HTTP {repo_response.status}")
         return []
     
     repo_data = json.loads(repo_response.data.decode('utf-8'))
@@ -35,7 +60,7 @@ def get_github_files(repo_url, file_type):
     response = http.request('GET', api_url)
 
     if response.status != 200:
-        print(f"Error fetching repository data: HTTP {response.status}")
+        logger.error(f"Error fetching repository data: HTTP {response.status}")
         return []
     
     data = json.loads(response.data.decode('utf-8'))
@@ -43,28 +68,30 @@ def get_github_files(repo_url, file_type):
     
     return files, default_branch
 
-def download_and_upload_github(repo_url, file_type, bucket_name, s3_folder):
+def download_and_upload_github(repo_url_list, file_type):
     """
     Downloads .md files from GitHub and uploads them to S3.
     """
-    print(f"\nDownloading {file_type} files from GitHub and uploading to S3...\n")
-    files, default_branch = get_github_files(repo_url, file_type)
+    logger.info(f"\nDownloading {file_type} files from GitHub and uploading to S3...\n")
     
-    s3_client = boto3.client('s3')
-    for file in files:
-        file_url = f"{repo_url}/raw/{default_branch}/{file['path']}"
-        file_response = http.request('GET', file_url)
-
-        if file_response.status != 200:
-            print(f"Failed to fetch file: {file['path']} (HTTP {file_response.status})")
-            continue
+    for repo_url in repo_url_list:
+        files, default_branch = get_github_files(repo_url, file_type)
         
-        file_content = file_response.data
-        s3_key = os.path.join(s3_folder, file['path'].replace("/", "_"))  # Flatten folder structure
-        s3_client.upload_fileobj(io.BytesIO(file_content), bucket_name, s3_key)
-        print(f"Uploaded: {s3_key}")
+        s3_client = boto3.client('s3')
+        for file in files:
+            file_url = f"{repo_url}/raw/{default_branch}/{file['path']}"
+            file_response = http.request('GET', file_url)
+
+            if file_response.status != 200:
+                logger.error(f"Failed to fetch file: {file['path']} (HTTP {file_response.status})")
+                continue
+            
+            file_content = file_response.data
+            s3_key = os.path.join(GITHUB_S3_FOLDER, repo_url, file['path'].replace("/", "_"))  # Flatten folder structure
+            s3_client.upload_fileobj(io.BytesIO(file_content), DOCUMENTATION_BUCKET, s3_key)
+            logger.info(f"Uploaded: {s3_key}")
     
-    print(f"Successfully uploaded {len(files)} {file_type} files to S3")
+        logger.info(f"Successfully uploaded {len(files)} {file_type} files to S3")
 
 class WebsiteSpider(scrapy.Spider):
     name = "website_spider"
@@ -78,12 +105,14 @@ class WebsiteSpider(scrapy.Spider):
             self.allowed_domains = [url.split('//')[-1].split('/')[0] for url in websites]
 
     def parse(self, response):
-        filename = response.url.rstrip("/").split("/")[-1] or "index"
-        file_key = os.path.join(WEBSITE_S3_FOLDER, f"{filename}.html")
+        url_path = response.url.replace("https://", "").replace("http://", "").rstrip("/")
+        filename = url_path.split("/")[-1] or "index"
+        file_key = os.path.join(WEBSITE_S3_FOLDER, url_path[:url_path.rfind("/")], f"{filename}.html")
         
         s3_client = boto3.client('s3')
-        s3_client.upload_fileobj(io.BytesIO(response.body), S3_BUCKET_NAME, file_key)
-        print(f"Uploaded {response.url} to S3 as {file_key}")
+        s3_bucket = DOCUMENTATION_BUCKET if url_path in DOCUMENTATION_SITES else POLICY_BUCKET
+        s3_client.upload_fileobj(io.BytesIO(response.body), s3_bucket, file_key)
+        logger.info(f"Uploaded {response.url} to S3 as {file_key}")
         
         for link in response.css("a::attr(href)").getall():
             if link.startswith("/") or any(domain in link for domain in self.allowed_domains):
@@ -97,19 +126,11 @@ def run_scraper(websites):
     process.crawl(WebsiteSpider, websites=websites)
     process.start()
 
+
 def lambda_handler(event, context):
-    github_repo_url = "https://github.com/clemsonciti/palmetto-examples"
-    
-    websites = [
-        "https://docs.rcd.clemson.edu/",
-        "https://slurm.schedmd.com/documentation.html",
-        "https://docs.globus.org/globus-connect-personal/",
-        "https://docs.globus.org/guides/tutorials/manage-files/transfer-files/",
-        "https://docs.globus.org/guides/tutorials/manage-files/share-files/"
-    ]
-    
-    download_and_upload_github(github_repo_url, "md", S3_BUCKET_NAME, GITHUB_S3_FOLDER)
-    run_scraper(websites)
+       
+    download_and_upload_github(DOCUMENTATION_REPOS, "md")
+    run_scraper(DOCUMENTATION_SITES + POLICY_SITES)
 
     response = {
         "statusCode": 200,
@@ -119,3 +140,4 @@ def lambda_handler(event, context):
     logger.info("Response: %s", response)
 
     return response
+
