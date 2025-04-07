@@ -6,6 +6,7 @@ import boto3
 import scrapy
 import logging
 from scrapy.crawler import CrawlerProcess
+from urllib.parse import urlparse
 
 # AWS S3 Configuration
 DOCUMENTATION_BUCKET = "palmetto-docs"
@@ -14,18 +15,42 @@ GITHUB_S3_FOLDER = "github-md-files"
 WEBSITE_S3_FOLDER = "website-html-files"
 HARDWARE_S3_FOLDER = "lambda-responses"
 
+KNOWLEDGE_BASES = [
+    'OACW6QTO3Q',
+    'QTOUTNGPGG'
+]
+
+DATA_SOURCES = [
+    '5ESCMTRS6X',
+    'NJIKFBA9AH'
+]
+
+ACCEPTED_CONTENT_TYPES = [
+    'text/html',
+    'text/plain',
+    'text/markdown',
+    'text/csv',
+    'application/pdf'
+]
+
+ACCEPTED_FILE_EXTENSIONS = [
+    '.html',
+    '.txt',
+    '.md',
+    '.csv',
+    '.pdf'
+]
+
 DOCUMENTATION_REPOS = [
     "https://github.com/clemsonciti/palmetto-examples"
 ]
     
 DOCUMENTATION_SITES = [
     "https://docs.rcd.clemson.edu/",
-    "https://slurm.schedmd.com/documentation.html",
+    "https://slurm.schedmd.com/",
     "https://docs.globus.org/globus-connect-personal/",
-    "https://docs.globus.org/guides/tutorials/manage-files/transfer-files/",
-    "https://docs.globus.org/guides/tutorials/manage-files/share-files/",
-    "https://clemsonciti.github.io/rcde_workshops/index.html",
-    "https://github.com/clemsonciti/palmetto-examples"
+    "https://docs.globus.org/guides/tutorials/",
+    "https://clemsonciti.github.io/rcde_workshops/"
 ]
 
 POLICY_SITES = [
@@ -87,7 +112,10 @@ def download_and_upload_github(repo_url_list, file_type):
                 continue
             
             file_content = file_response.data
-            s3_key = os.path.join(GITHUB_S3_FOLDER, repo_url, file['path'].replace("/", "_"))  # Flatten folder structure
+            
+            parsed_repo = urlparse(repo_url)
+            repo_name = parsed_repo.path.strip("/").split("/")[-1]
+            s3_key = os.path.join(GITHUB_S3_FOLDER, repo_name, file['path'])
             s3_client.upload_fileobj(io.BytesIO(file_content), DOCUMENTATION_BUCKET, s3_key)
             logger.info(f"Uploaded: {s3_key}")
     
@@ -102,35 +130,57 @@ class WebsiteSpider(scrapy.Spider):
         super().__init__(*args, **kwargs)
         if websites:
             self.start_urls = websites
-            self.allowed_domains = [url.split('//')[-1].split('/')[0] for url in websites]
+            self.allowed_domains = [urlparse(url).netloc for url in websites]
 
     def parse(self, response):
-        url_path = response.url.replace("https://", "").replace("http://", "").rstrip("/")
-        filename = url_path.split("/")[-1] or "index"
-        file_key = os.path.join(WEBSITE_S3_FOLDER, url_path[:url_path.rfind("/")], f"{filename}.html")
+        content_type = response.headers.get('Content-Type', b'').decode('utf-8')
+
+        # ignoring media 
+        if not any(valid_type in content_type for valid_type in ACCEPTED_CONTENT_TYPES):
+            return
         
+        parsed = urlparse(response.url)
+        url_path = os.path.dirname(parsed.path)
+        filename = os.path.basename(parsed.path) or "index"
+        
+        file_key = os.path.join(
+            WEBSITE_S3_FOLDER,
+            parsed.netloc + url_path,
+            filename if filename.endswith(tuple(ACCEPTED_FILE_EXTENSIONS)) else f"{filename}.html"
+        )
+
         s3_client = boto3.client('s3')
-        s3_bucket = DOCUMENTATION_BUCKET if url_path in DOCUMENTATION_SITES else POLICY_BUCKET
+        s3_bucket = DOCUMENTATION_BUCKET if any(parsed.netloc in site for site in DOCUMENTATION_SITES) else POLICY_BUCKET
         s3_client.upload_fileobj(io.BytesIO(response.body), s3_bucket, file_key)
         logger.info(f"Uploaded {response.url} to S3 as {file_key}")
         
         for link in response.css("a::attr(href)").getall():
-            if link.startswith("/") or any(domain in link for domain in self.allowed_domains):
-                yield response.follow(link, callback=self.parse)
+            yield response.follow(link, callback=self.parse)
 
 def run_scraper(websites):
     process = CrawlerProcess({
         'USER_AGENT': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'LOG_LEVEL': 'INFO'
+        'LOG_LEVEL': 'INFO',
+        'DEPTH_LIMIT': 5,
+        'CONCURRENT_REQUESTS': 32
     })
     process.crawl(WebsiteSpider, websites=websites)
     process.start()
 
+def sync_knowledgebases():
+    client = boto3.client('bedrock-agent')
+    
+    for kb, ds in zip(KNOWLEDGE_BASES, DATA_SOURCES):
+        response = client.start_ingestion_job(
+            knowledgeBaseId=kb,
+            dataSourceId=ds
+        )
 
 def lambda_handler(event, context):
        
     download_and_upload_github(DOCUMENTATION_REPOS, "md")
     run_scraper(DOCUMENTATION_SITES + POLICY_SITES)
+    sync_knowledgebases()
 
     response = {
         "statusCode": 200,
