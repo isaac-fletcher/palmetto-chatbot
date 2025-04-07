@@ -1,6 +1,8 @@
+import botocore
 import boto3
 import json
 import logging
+from time import sleep
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -8,6 +10,8 @@ logger.setLevel(logging.INFO)
 # Flow configurations for category determination
 CATEGORY_FLOW_ALIAS = "0E1MTVV782"
 CATEGORY_FLOW_ID = "2T4MR1JV9Y"
+
+AURORA_SLEEP_WAIT_TIME = 5
 
 # Flow configurations for specific categories
 FLOW_CONFIGS = {
@@ -74,39 +78,47 @@ OUTPUTNAME = "document"
 
 def invoke_flow(client, flow_id, flow_alias, message):
     """Helper function to invoke a flow and process its response"""
-    try:
-        logger.info(f"Invoking flow {flow_id} with alias {flow_alias}")
-        flow = client.invoke_flow(
-            flowAliasIdentifier=flow_alias,
-            flowIdentifier=flow_id,
-            inputs=[
-                {
-                    'content': {
-                        'document': message
+    # this forces the operation to repeat if a dependencyFailedException is encountered
+    while True:
+        try:
+            logger.info(f"Invoking flow {flow_id} with alias {flow_alias}")
+            flow = client.invoke_flow(
+                flowAliasIdentifier=flow_alias,
+                flowIdentifier=flow_id,
+                inputs=[
+                    {
+                        'content': {
+                            'document': message
+                        },
+                        'nodeName': NODE,
+                        'nodeOutputName': OUTPUTNAME
                     },
-                    'nodeName': NODE,
-                    'nodeOutputName': OUTPUTNAME
-                },
-            ],
-        )
+                ],
+            )
 
-        # Process the flow response
-        flow_output = ""
-        for event in flow['responseStream']:
-            key = next(iter(event.keys()))
+            # Process the flow response
+            flow_output = ""
+            for event in flow['responseStream']:
+                key = next(iter(event.keys()))
 
-            if "Exception" in key:
-                raise Exception(event[key])
+                if "Exception" in key:
+                    raise Exception(event[key])
 
-            if "flowOutputEvent" in key:
-                flow_output += event['flowOutputEvent']['content']['document']
+                if "flowOutputEvent" in key:
+                    flow_output += event['flowOutputEvent']['content']['document']
 
-        logger.info(f"Flow {flow_id} completed successfully")
-        return flow_output.strip()
+            logger.info(f"Flow {flow_id} completed successfully")
+            return flow_output.strip()
 
-    except Exception as e:
-        logger.error(f"Flow {flow_id} failed to execute: {str(e)}")
-        raise e
+
+        except Exception as e:
+            # Handles dependencyFailedException raised when Aurora DB is paused
+            if isinstance(e, botocore.exceptions.ClientError) and e.response['Error']['Code'] == 'dependencyFailedException':
+                logger.error(f"Aurora DB auto-paused. Sleeping for {AURORA_SLEEP_WAIT_TIME} seconds to allow it to auto resume.")
+                sleep(AURORA_SLEEP_WAIT_TIME)
+            else:
+                logger.error(f"Flow {flow_id} failed to execute: {str(e)}")
+                raise e
 
 def lambda_handler(event, context):
     """
@@ -118,11 +130,13 @@ def lambda_handler(event, context):
     original_message = event.get("text")
     if not original_message:
         logger.error("No text provided in the request")
-        # statusCode: 400,
-        return {
-            "response_type": "comment",
-            "text": "No text provided in the request"
+
+        response = {
+            "result": "ERROR",
+            "error": "No text provided in the request"
         }
+
+        return response
 
     client = boto3.client('bedrock-agent-runtime')
 
@@ -159,8 +173,8 @@ def lambda_handler(event, context):
 
 
         # Return the response
-        # statusCode: 200,
         response = {
+            "result": "OK",
             "response_type": "comment",
             "text": final_response,
             "category": category,
@@ -173,8 +187,9 @@ def lambda_handler(event, context):
     except Exception as e:
         error_message = f"Error processing request: {str(e)}"
         logger.error(error_message)
-        # statusCode: 500
+
         return {
-            "response_type": "comment",
-            "text": error_message
+            "result": "ERROR",
+            "error": error_message
         }
+
