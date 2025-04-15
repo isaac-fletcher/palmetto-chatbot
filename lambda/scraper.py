@@ -5,8 +5,9 @@ import json
 import urllib3
 import scrapy
 import logging
-import hashlib
+from time import sleep
 import boto3, botocore
+from hashlib import sha256
 from scrapy.crawler import CrawlerProcess
 from urllib.parse import urlparse, urljoin, quote_plus
 
@@ -82,7 +83,7 @@ def upload_to_s3(file_key: str, s3_bucket: str, data):
     Uploads data to an s3 bucket with a specified key.
     """
 
-    local_hash = hashlib.sha256(data).hexdigest()
+    local_hash = sha256(data).hexdigest()
 
     try:
         response = s3_client.head_object(Bucket=s3_bucket, Key=file_key)
@@ -134,7 +135,7 @@ def get_github_files(repo_url, file_type):
         return []
 
     data = json.loads(response.data.decode('utf-8'))
-    files = [file for file in data.get('tree', []) if file.get('type') == 'blob' and file.get('path', '').endswith(f".{file_type}")]
+    files = [file for file in data.get('tree', []) if file.get('type') == 'blob' and file.get('path', '').endswith(f"{file_type}")]
 
     return files, default_branch
 
@@ -267,30 +268,42 @@ def sync_knowledgebases():
     """
     Syncs content knowledge bases.
     """
+    
+    client = boto3.client('bedrock-agent')
+    logger.info("Syncing Knowledge Bases...")
 
-    while True:
-        try:
-            client = boto3.client('bedrock-agent')
-            logger.info("Syncing Knowledge Bases...")
+    incomplete = [(key, value) for key, values in KNOWLEDGE_BASES.items() for value in values]
 
-            for kb in KNOWLEDGE_BASES.keys():
-                for ds in KNOWLEDGE_BASES[kb]:
-                    response = client.start_ingestion_job(
-                        knowledgeBaseId=kb,
-                        dataSourceId=ds
-                    )
+    # While there are still items to process, keep processing
+    while incomplete:
+        for kb, ds in incomplete:
+            try:       
+                response = client.start_ingestion_job(
+                    knowledgeBaseId=kb,
+                    dataSourceId=ds
+                )
+                
+                incomplete.remove((kb, ds))
+
+                logger.info(f"Data Store {ds} in Knowledge Base {kb} synced!")
+
+            except Exception as e:
+                # Handles ValidationException raised when Aurora DB is paused
+                if isinstance(e, botocore.exceptions.ClientError) and e.response['Error']['Code'] == 'ValidationException':
+                    logger.error(f"Aurora DB auto-paused. Sleeping for {AURORA_SLEEP_WAIT_TIME} seconds to allow it to auto resume.")
+                    sleep(AURORA_SLEEP_WAIT_TIME)
+                
+                # Handles ConflictException raised when Knowledge Base is already syncing
+                elif isinstance(e, botocore.exceptions.ClientError) and e.response['Error']['Code'] == "ConflictException":
+                    logger.error(f"Knowledge Base Sync already in progress. Sleeping for {AURORA_SLEEP_WAIT_TIME} seconds to allow it to complete.")
+                    sleep(AURORA_SLEEP_WAIT_TIME)
+                    
+                    incomplete.remove((kb, ds))
+
                     logger.info(f"Data Store {ds} in Knowledge Base {kb} synced!")
-
-            return
-
-        except Exception as e:
-            # Handles dependencyFailedException raised when Aurora DB is paused
-            if isinstance(e, botocore.exceptions.ClientError) and e.response['Error']['Code'] == 'dependencyFailedException':
-                logger.error(f"Aurora DB auto-paused. Sleeping for {AURORA_SLEEP_WAIT_TIME} seconds to allow it to auto resume.")
-                sleep(AURORA_SLEEP_WAIT_TIME)
-            else:
-                logger.error(f"Flow {flow_id} failed to execute: {str(e)}")
-                raise e
+                else:
+                    logger.error(f"Knowledge Base Sync failed to execute: {str(e)}")
+                    raise e
 
 def lambda_handler(event, context):
 
