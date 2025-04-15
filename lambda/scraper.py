@@ -1,5 +1,6 @@
 import os
 import io
+import re
 import json
 import urllib3
 import scrapy
@@ -14,6 +15,7 @@ DOCUMENTATION_BUCKET = "palmetto-docs"
 POLICY_BUCKET = "ccit-docs"
 GITHUB_S3_FOLDER = "github-md-files"
 WEBSITE_S3_FOLDER = "website-html-files"
+BOOK_S3_FOLDER = "book-pdf-files"
 
 AURORA_SLEEP_WAIT_TIME = 5
 
@@ -36,6 +38,7 @@ ACCEPTED_CONTENT_TYPES = [
     'text/plain',
     'text/markdown',
     'text/csv',
+    'text/pdf'
 ]
 
 # Valid File Extensions
@@ -44,25 +47,27 @@ ACCEPTED_FILE_EXTENSIONS = [
     '.txt',
     '.md',
     '.csv',
+    '.pdf'
 ]
 
-
 DOCUMENTATION_REPOS = [
-    #"https://github.com/clemsonciti/palmetto-examples"
+    "https://github.com/clemsonciti/palmetto-examples"
 ]
 
 DOCUMENTATION_SITES = [
-    #"https://docs.rcd.clemson.edu/",
-    #"https://slurm.schedmd.com/",
-    #"https://docs.globus.org/globus-connect-personal/",
-    #"https://docs.globus.org/guides/tutorials/",
-    #"https://clemsonciti.github.io/rcde_workshops/"
+    "https://docs.rcd.clemson.edu/",
+    "https://slurm.schedmd.com/",
+    "https://docs.globus.org/globus-connect-personal/",
+    "https://docs.globus.org/guides/tutorials/",
+    "https://clemsonciti.github.io/rcde_workshops/"
 ]
 
 POLICY_SITES = [
-    #"https://ccit.clemson.edu/cybersecurity/policy/",
-    "https://clemsonpub.cfmnetwork.com/"
+    "https://ccit.clemson.edu/cybersecurity/policy/",
 ]
+
+POLICY_BOOK_LIST = "https://clemsonpub.cfmnetwork.com/PublicPageViewList.aspx?id=16"
+POLICY_BOOK_DOWNLOAD = "https://clemsonpub.cfmnetwork.com/BookPrint.aspx"
 
 # Initial setup configuration
 http = urllib3.PoolManager()
@@ -76,6 +81,7 @@ def upload_to_s3(file_key: str, s3_bucket: str, data):
     """
     Uploads data to an s3 bucket with a specified key.
     """
+
     local_hash = hashlib.sha256(data).hexdigest()
 
     try:
@@ -101,6 +107,7 @@ def upload_to_s3(file_key: str, s3_bucket: str, data):
             Key=file_key,
             ExtraArgs={'Metadata': {'sha256': local_hash}}
     )
+
     logger.info(f"Uploaded {file_key} with hash {local_hash} to {s3_bucket}")
 
 
@@ -131,30 +138,51 @@ def get_github_files(repo_url, file_type):
 
     return files, default_branch
 
-def download_and_upload_github(repo_url_list, file_type):
+def download_and_upload_github(repo_url_list):
     """
-    Downloads .md files from GitHub and uploads them to S3.
+    Downloads acceptable file types from GitHub and uploads them to S3.
     """
-    logger.info(f"\nDownloading {file_type} files from GitHub and uploading to S3...\n")
+
+    logger.info(f"\nDownloading files from GitHub and uploading to S3...\n")
 
     for repo_url in repo_url_list:
-        files, default_branch = get_github_files(repo_url, file_type)
+        for file_type in ACCEPTED_FILE_EXTENSIONS:
+            files, default_branch = get_github_files(repo_url, file_type)
 
-        for file in files:
-            file_url = f"{repo_url}/raw/{default_branch}/{file['path']}"
-            response = http.request('GET', file_url)
+            for file in files:
+                file_url = f"{repo_url}/raw/{default_branch}/{file['path']}"
+                response = http.request('GET', file_url)
 
-            if response.status != 200:
-                logger.error(f"Failed to fetch file: {file['path']} (HTTP {response.status})")
-                continue
+                if response.status != 200:
+                    logger.error(f"Failed to fetch file: {file['path']} (HTTP {response.status})")
+                    continue
 
-            parsed_repo = urlparse(repo_url)
+                parsed_repo = urlparse(repo_url)
 
-            repo_name = parsed_repo.path.strip("/").split("/")[-1]
-            file_key = os.path.join(GITHUB_S3_FOLDER, repo_name, file['path'])
-            upload_to_s3(file_key, DOCUMENTATION_BUCKET, response.data)
+                repo_name = parsed_repo.path.strip("/").split("/")[-1]
+                file_key = os.path.join(GITHUB_S3_FOLDER, repo_name, file['path'])
+                upload_to_s3(file_key, DOCUMENTATION_BUCKET, response.data)
 
-        logger.info(f"Successfully uploaded {len(files)} {file_type} files to S3")
+def download_and_upload_books():
+    """
+    Downloads book PDFs and uploads them to S3.
+    """
+
+    response = http.request('GET', POLICY_BOOK_LIST)
+    decoded_response = response.data.decode('utf-8', errors='ignore')
+    book_list = re.findall(r'BookId=(\d+)', decoded_response)
+
+    for book in book_list:
+        book_url = f"{POLICY_BOOK_DOWNLOAD}?IsPDF=1&BookId={book}"
+        response = http.request('GET', book_url)
+
+        if response.status != 200:
+            print(f"Failed to fetch book {book} (HTTP {response.status})")
+            continue
+
+        file_key = os.path.join(BOOK_S3_FOLDER, f"{book}.pdf")
+        upload_to_s3(file_key, POLICY_BUCKET, response.data)
+
 
 class WebsiteSpider(scrapy.Spider):
     name = "website_spider"
@@ -221,6 +249,10 @@ class WebsiteSpider(scrapy.Spider):
                 yield response.follow(link, callback=self.parse)
 
 def run_scraper(websites):
+    """
+    Starts the web scraper on the supplied website list.
+    """
+
     process = CrawlerProcess({
         'USER_AGENT': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
         'LOG_LEVEL': 'INFO',
@@ -232,6 +264,9 @@ def run_scraper(websites):
     process.start()
 
 def sync_knowledgebases():
+    """
+    Syncs content knowledge bases.
+    """
 
     while True:
         try:
@@ -259,9 +294,10 @@ def sync_knowledgebases():
 
 def lambda_handler(event, context):
 
-    download_and_upload_github(DOCUMENTATION_REPOS, "md")
+    download_and_upload_github(DOCUMENTATION_REPOS)
     run_scraper(DOCUMENTATION_SITES + POLICY_SITES)
-    # sync_knowledgebases()
+    download_and_upload_books()
+    sync_knowledgebases()
 
     response = {
         "statusCode": 200,
