@@ -1,0 +1,26 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "Lambda-BucketPolicy",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "arn:aws:iam::605134456935:role/service-role/web-scraper-role-4lrpzgsm"
+            },
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::ccit-docs"
+        },
+        {
+            "Sid": "Lambda-ObjectPolicy",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "arn:aws:iam::605134456935:role/service-role/web-scraper-role-4lrpzgsm"
+            },
+            "Action": [
+                "s3:PutObject",
+                "s3:GetObject"
+            ],
+            "Resource": "arn:aws:s3:::ccit-docs/*"
+        }
+    ]
+}
